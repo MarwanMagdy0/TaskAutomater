@@ -12,6 +12,7 @@ USER_DATA_DIR = os.path.abspath("user_data")
 VERIFY_BUTTON_SELECTOR = 'xpath=//*[@id="profile-control"]/div/div/div/div[2]/form/div/div[4]/div/div/div[2]/button'
 PHONE_SELECTOR = 'xpath=//*[@id="phone"]'
 SAVE_CHANGES_SELECTOR = 'xpath=//*[@id="profile-control"]/div/div/div/div[3]/button[1]'
+OK_BUTTON_SELECTOR = 'body > div.sweet-alert.showSweetAlert.visible > div.sa-button-container > div > button'
 
 # List of phone numbers to loop through
 phone_numbers = [
@@ -58,13 +59,10 @@ with sync_playwright() as p:
                 print("Verify button clicked")
 
                 # Wait for OK dialog and click it
-                ok_button = page.get_by_role("button", name="OK")
-                if ok_button.count() > 0 and ok_button.first.is_visible():
-                    ok_button.first.click()
-                    print("OK button clicked")
-                else:
-                    print("No visible OK button found")
-
+                page.wait_for_selector(OK_BUTTON_SELECTOR, timeout=10000)
+                print("OK button is now visible")
+                time.sleep(1)
+                page.locator(OK_BUTTON_SELECTOR).click()
                 print("OK button clicked")
 
                 # Wait for Verify dialog again and close
