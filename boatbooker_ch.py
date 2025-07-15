@@ -4,7 +4,7 @@ import time
 import os
 
 # Path to unpacked Browsec extension
-EXTENSION_PATH = os.path.abspath("/home/marwan/Downloads/Browsec")
+EXTENSION_PATH = os.path.abspath("Browsec")
 
 # Create a folder to store browser user data
 USER_DATA_DIR = os.path.abspath("user_data")
