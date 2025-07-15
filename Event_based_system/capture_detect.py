@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import time
 from mss import mss
-
+sct = mss()
 def screen_template_match(template_path, timeout=5, threshold=0.8):
     """
     Blocking function: captures full screen and matches template until timeout or success.
@@ -20,7 +20,7 @@ def screen_template_match(template_path, timeout=5, threshold=0.8):
         raise ValueError("Template image not found or invalid.")
 
     w, h = template.shape[::-1]
-    sct = mss()
+    
     monitor = sct.monitors[1]  # Full primary monitor (you can loop for multi-monitor support)
 
     start_time = time.time()
