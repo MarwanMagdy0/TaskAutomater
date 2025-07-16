@@ -1,43 +1,85 @@
+#!/usr/bin/env python3
+import re
 import requests
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 
-url = "https://auth.ticketmaster.com/verify-otp/json/send/otp/sms?clientToken=eyJhbGciOiJka...<truncated for brevity>...g54"
 
-headers = {
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Encoding": "gzip, deflate, br, zstd",
-    "Accept-Language": "en-us",
-    "Connection": "keep-alive",
-    "Content-Type": "application/json",
-    "Origin": "https://auth.ticketmaster.com",
-    "Referer": "https://auth.ticketmaster.com/as/authorization.oauth2?client_id=8bf7204a7e97.web.ticketmaster.us&response_type=code&scope=openid%20profile%20phone%20email%20tm&redirect_uri=https://identity.ticketmaster.com/exchange&visualPresets=tm&lang=en-us&placementId=mytmlogin&hideLeftPanel=false&integratorId=prd1741.iccp&intSiteToken=tm-us&TMUO=west_55UHUsKTiSvu4AxT2nb+epckIC0lh/7abNUQu5rQjzU=&deviceId=wUaboSf7QsXHycbKw8TKx73GvcY6XPNX1AReMw&doNotTrack=false&disableAutoOptIn=false",
-    "tm-client-id": "baf9f4135217.web.ticketmaster.us",
-    "tm-integrator-id": "prd1741.iccp",
-    "tm-placement-id": "mytmlogin",
-    "tm-site-token": "tm-us",
-    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0"
-}
+def solve_captcha(text):
+    """Extract and evaluate the CAPTCHA expression."""
+    match = re.search(r'What is (.+?)=', text)
+    return eval(match.group(1).strip()) if match else None
 
-cookies = {
-    "TMAUO": "west_WOTpvH9HmXomTp1i00d0k6cLjJ+Tuq2Q7mKAb0cNjSo=",
-    "ma.LANGUAGE": "en-us",
-    "ma.SID": "vCITuYUlqzn-Jg3HzJmMX90T3QbKJTqkzu0xCSCXryjVRvbvLimWyM5zoFL54ZN2jeAV4YzK2RkErW9E9daO",
-    "ma.BID": "vCdBSvi4Jjaa-uVgMMOnhAEO5J4r5KCwC-_mbP-2ytj3XYtIMVgjH1M7V5RnDz_1LZfbX4HKyu30z_o",
-    "eps_sid": "352b71341aceeb363bc0d3d81a3055c00d4b3d18",
-    # Add any additional cookies you need from the browser here
-}
 
-# Your full payload as Python dictionary
-payload = {
-    "emailAddress": None,
-    "phoneNumber": "+221766415529",
-    "userIdentifier": "cOFkILwXHpyawFLjqoNom8KK_d9xKyP0O0L5ymlDxQH9pZhLd6g-yG8tfIuNQr-EtYi9O1sBU-JS_DnqR63I-CR5JztZO1pmP8LvI7WEJQKD9VPENddvSsUzpZfJHcE_Pxl9ZtIUy9UkFZyw_t_HT5F2uc6r1MIpQswPla5YqJ7_GG673yRpei4neOGGjwria2Jq6GIynTIS4nQTVt5UC0GLQPqbwl7mfTU1u3Ugi5yY2FkUs347Ng_cUFLc8aU8SYIPih_Q2HhO50cOLY2z6eFU-QTq8Y_kWOdyXava2il0rOfhJI8fQFZ9-yIY084IXTM7TH1JyHPIYHcZIQGTRRhk480wdunRyDkPce5Y41wn-AcVL9JkjUtWGSiHlSfku7xbiYRwM9QaWTe4412C-pdD6R4L062310NsDjNsBazJXMDTZhghBoGb4FJ77s9pmjw0NaLIC_uCbEPpY8w0dwODoRrAwMuPmD4eYjLMGkbJKMVR6VjwvhXOWWlYcF5l9rr8HPykr9LSUq7cFUYuwwyAMYLFsLElqZvWlin5iiy1IHjzHKPWqsPjbi4oTfN9rBFCr-8GUb08rPXzYlMtkwkvNXZbxDzxEEQVMkn7Rx1GXOe83sXlBC1nvEZZpdJwrvvzlXPqRSUtApHUIaCR7E9dx7PNHOJ9IkyS7M0Kn4uQCpNM1FqAVfL5HqISk_b2_dp-EEZnJ_WC-ZE3fyAv8KBamMfskIGsUSS412G00KGhoKG15VS2ELCgOlc_63Q6rhygmZ-RhyhjIwqS6Y34mxKVtC0Q8hq0DReHQKVDLlq4cjsfXNVGNS4Tz2Ogg7fw1Kvge_4RIjOFrHJ_S9cpVS6Pm_sFaBi1sDesWYg9uAMvJLiwbSHquLVFSc_nDIedWewu8O0tzhqDkfbS6dFAUg",
-    "flow": "bind_phone",
-    "referenceId": "cOFkILwXHpyawFLjqoNom8KK_d9xKyP0O0L5ymlDxQH9pZhLd6g-yG8tfIuNQr-EtYi9O1sBU-JS_DnqR63I-CR5JztZO1pmP8LvI7WEJQKD9VPENddvSsUzpZfJHcE_Pxl9ZtIUy9UkFZyw_t_HT5F2uc6r1MIpQswPla5YqJ7_GG673yRpei4neOGGjwria2Jq6GIynTIS4nQTVt5UC0GLQPqbwl7mfTU1u3Ugi5yY2FkUs347Ng_cUFLc8aU8SYIPih_Q2HhO50cOLY2z6eFU-QTq8Y_kWOdyXava2il0rOfhJI8fQFZ9-yIY084IXTM7TH1JyHPIYHcZIQGTRRhk480wdunRyDkPce5Y41wn-AcVL9JkjUtWGSiHlSfku7xbiYRwM9QaWTe4412C-pdD6R4L062310NsDjNsBazJXMDTZhghBoGb4FJ77s9pmjw0NaLIC_uCbEPpY8w0dwODoRrAwMuPmD4eYjLMGkbJKMVR6VjwvhXOWWlYcF5l9rr8HPykr9LSUq7cFUYuwwyAMYLFsLElqZvWlin5iiy1IHjzHKPWqsPjbi4oTfN9rBFCr-8GUb08rPXzYlMtkwkvNXZbxDzxEEQVMkn7Rx1GXOe83sXlBC1nvEZZpdJwrvvzlXPqRSUtApHUIaCR7E9dx7PNHOJ9IkyS7M0Kn4uQCpNM1FqAVfL5HqISk_b2_dp-EEZnJ_WC-ZE3fyAv8KBamMfskIGsUSS412G00KGhoKG15VS2ELCgOlc_63Q6rhygmZ-RhyhjIwqS6Y34mxKVtC0Q8hq0DReHQKVDLlq4cjsfXNVGNS4Tz2Ogg7fw1Kvge_4RIjOFrHJ_S9cpVS6Pm_sFaBi1sDesWYg9uAMvJLiwbSHquLVFSc_nDIedWewu8O0tzhqDkfbS6dFAUg"
-}
+def fetch_value_and_sms_data():
+    try:
+        # Initialize session
+        session = requests.Session()
+        base_url = "http://45.82.67.20"
+        login_url = f"{base_url}/ints/login"
+        signin_url = f"{base_url}/ints/signin"
+        data_url = f"{base_url}/ints/client/res/data_smscdr.php"
 
-# Send the POST request
-response = requests.post(url, headers=headers, cookies=cookies, json=payload)
+        # ───── Step 1: Solve CAPTCHA ─────
+        login_page = session.get(login_url, timeout=10)
+        soup = BeautifulSoup(login_page.text, "html.parser")
+        captcha_div = next((div.get_text(strip=True)
+                            for div in soup.find_all("div", class_="col-sm-6")
+                            if "What is" in div.text and "=" in div.text), None)
+        captcha_answer = solve_captcha(captcha_div)
 
-# Print status and response
-print("Status:", response.status_code)
-print("Response body:", response.text)
+        # ───── Step 2: Login ─────
+        login_payload = {
+            "username": "mohamedmagdy",
+            "password": "mohamedmagdy",
+            "capt": str(captcha_answer)
+        }
+        login_headers = {
+            "Referer": login_url,
+            "Origin": base_url,
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        login_response = session.post(signin_url, data=login_payload,
+                                      headers=login_headers, timeout=10)
+
+        # ───── Step 3: Extract Dashboard Value ─────
+        dashboard = BeautifulSoup(login_response.text, "html.parser")
+        value_tag = dashboard.find("h4", class_="fs-20 fw-bold mb-1 text-fixed-white")
+        main_value = value_tag.get_text(strip=True) if value_tag else "???"
+        print("Value:", main_value)
+
+        # ───── Step 4: Query SMSCDR Data ─────
+        from_time = datetime.now() - timedelta(minutes=60*3 + 30) # 3h as time in ims is not synced
+        to_time = datetime.now() 
+
+        smscdr_params = {
+            "fdate1": from_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "fdate2": to_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "iDisplayLength": "25",
+        }
+
+        ajax_headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate",
+            "X-Requested-With": "XMLHttpRequest",
+            "Connection": "keep-alive",
+            "Referer": f"{base_url}/ints/client/SMSCDRStats"
+        }
+
+        smscdr_response = session.get(data_url, params=smscdr_params,headers=ajax_headers, timeout=10)
+
+        print("Cookies:", session.cookies.get_dict())
+        print("Status:", smscdr_response.status_code)
+        # print("Response:\n", smscdr_response.json()["aaData"])
+        for key in smscdr_response.json()["aaData"][:-1]:
+            print(key[0:3])
+
+    except Exception as e:
+        print("Error:", e)
+
+
+if __name__ == "__main__":
+    fetch_value_and_sms_data()
