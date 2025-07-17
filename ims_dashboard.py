@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-import sys, re, requests
+import sys, re, requests, os
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QUrl
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QProgressBar,
     QTableWidget, QTableWidgetItem, QHeaderView
 )
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
-
-# ──────────────── Worker Thread ─────────────── 
+# ────────────────────── Worker Thread ────────────────────── 
 class Worker(QThread):
     finished = pyqtSignal(tuple)      # (main value, header text)
     new_sms_data = pyqtSignal(list)   # [[timestamp, range, number], ...]
@@ -45,13 +45,13 @@ class Worker(QThread):
             self.finished.emit((value, header_txt))
 
             # Step 4: SMSCDR fetch
-            from_time = datetime.now() - timedelta(hours=3, minutes=30)
+            from_time = datetime.now() - timedelta(hours=3, minutes=10)
             to_time = datetime.now()
 
             smscdr_params = {
                 "fdate1": from_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "fdate2": to_time.strftime("%Y-%m-%d %H:%M:%S"),
-                "iDisplayLength": "30",
+                "iDisplayLength": "15",
             }
 
             ajax_headers = {
@@ -70,17 +70,16 @@ class Worker(QThread):
                     dt = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S") + timedelta(hours=3)
                     time_str = dt.strftime("%Y-%m-%d %I:%M:%S %p")
                     formatted.append([time_str, row[1], row[2]])
-                except:
+                except Exception:
                     continue
 
             self.new_sms_data.emit(list(reversed(formatted))[:50])
 
-        except Exception as e:
-            # print("Worker error:", e)
+        except Exception:
             self.finished.emit(("Error", ""))
 
 
-# ─────────────── Main UI ─────────────── 
+# ──────────────────── Main UI ──────────────────── 
 class LoginFetcher(QWidget):
     REQUEST_INTERVAL_MS = 10000
     ANIM_STEP_MS = 20
@@ -124,6 +123,19 @@ class LoginFetcher(QWidget):
         self.req_timer.timeout.connect(self._launch_worker)
         self.req_timer.start(self.REQUEST_INTERVAL_MS)
 
+        self._last_number = None
+
+        self._player = QMediaPlayer()
+        mp3_path = os.path.abspath("money_sound.mp3")
+        print("Loading MP3 from:", mp3_path)
+        if os.path.exists(mp3_path):
+            self._player.setMedia(QMediaContent(QUrl.fromLocalFile(mp3_path)))
+        else:
+            print("MP3 file not found!")
+
+        self._player.mediaStatusChanged.connect(lambda s: print("Media status:", s))
+        self._player.error.connect(lambda e: print("Media error:", self._player.errorString()))
+
         self._launch_worker()
 
     def _tick_progress(self):
@@ -157,13 +169,30 @@ class LoginFetcher(QWidget):
 
     def _update_table(self, sms_list):
         self.table.setRowCount(0)
+        if sms_list:
+            try:
+                latest_number = int(sms_list[0][2])
+            except ValueError:
+                latest_number = None
+
+            if self._last_number is not None and latest_number is not None:
+                if latest_number != self._last_number:
+                    print(f"Number changed: {self._last_number} -> {latest_number}. Playing sound.")
+                    self._player.setPosition(0)
+                    self._player.play()
+            else:
+                print("No previous number to compare.")
+
+            if latest_number is not None:
+                self._last_number = latest_number
+
         for i, row in enumerate(sms_list):
             self.table.insertRow(i)
             for j, item in enumerate(row):
                 self.table.setItem(i, j, QTableWidgetItem(item))
 
 
-# ─────────────── Run the App ─────────────── 
+# ─────────────────── Run the App ───────────────────
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = LoginFetcher()
