@@ -41,6 +41,49 @@ class PhoneStatusManager:
         print(f"Updated {number}: is_working={is_working}")
 
 
+class EmailManager:
+    def __init__(self, filepath='emails.json'):
+        self.filepath = filepath
+        self.load_data()
+
+    def load_data(self):
+        with open(self.filepath, 'r') as f:
+            self.data = json.load(f)
+
+    def save_data(self):
+        with open(self.filepath, 'w') as f:
+            json.dump(self.data, f, indent=2)
+
+    def get_email(self):
+        for email, info in self.data.items():
+            if not info.get("used", False):
+                self.data[email]["last_checked"] = int(time.time())
+                self.save_data()
+                return email
+        return None  # No unused emails found
+
+    def increment_email_usage(self, email):
+        if email in self.data:
+            self.data[email]["checks"] = self.data[email].get("checks", 0) + 1
+            self.save_data()
+        else:
+            raise ValueError(f"Email {email} not found in data.")
+
+    def restore_email(self, email):
+        if email in self.data:
+            self.data[email]["used"] = False
+            self.save_data()
+        else:
+            raise ValueError(f"Email {email} not found in data.")
+    
+    def email_is_used(self, email):
+        if email in self.data:
+            self.data[email]["used"] = True
+            self.save_data()
+        else:
+            raise ValueError(f"Email {email} not found in data.")
+
+
 def time_logg(message: str):
     """Log a message with the current time."""
     current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())

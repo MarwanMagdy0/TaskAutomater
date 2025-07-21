@@ -123,7 +123,7 @@ class LoginFetcher(QWidget):
         self.req_timer.timeout.connect(self._launch_worker)
         self.req_timer.start(self.REQUEST_INTERVAL_MS)
 
-        self._last_number = None
+        self._last_value_text = None
 
         self._player = QMediaPlayer()
         mp3_path = os.path.abspath("money_sound.mp3")
@@ -162,6 +162,14 @@ class LoginFetcher(QWidget):
 
     def _update_ui(self, data):
         value, header = data
+
+        # Sound only if value_lbl text changed
+        if self._last_value_text != value:
+            print(f"Value changed: {self._last_value_text} -> {value}")
+            self._player.setPosition(0)
+            self._player.play()
+            self._last_value_text = value
+
         self.value_lbl.setText(value)
         self.header_lbl.setText(header or "No header")
         self._reset_progress()
@@ -169,22 +177,6 @@ class LoginFetcher(QWidget):
 
     def _update_table(self, sms_list):
         self.table.setRowCount(0)
-        if sms_list:
-            try:
-                latest_number = int(sms_list[0][2])
-            except ValueError:
-                latest_number = None
-
-            if self._last_number is not None and latest_number is not None:
-                if latest_number != self._last_number:
-                    print(f"Number changed: {self._last_number} -> {latest_number}. Playing sound.")
-                    self._player.setPosition(0)
-                    self._player.play()
-            else:
-                print("No previous number to compare.")
-
-            if latest_number is not None:
-                self._last_number = latest_number
 
         for i, row in enumerate(sms_list):
             self.table.insertRow(i)
