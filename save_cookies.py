@@ -1,9 +1,18 @@
 from playwright.sync_api import sync_playwright
 import json
 import time
+import sys
 
-cookies_file = "tradingview_cookies/i4vewhrlln.json"  # File to save cookies
+if len(sys.argv) < 2:
+    print("Usage: python load_cookies.py <cookies_file>")
+    sys.exit(1)
 
+file_name = sys.argv[1].split('@')[0]
+
+cookies_file = f"tradingview_cookies_new/{file_name}.json"
+
+print(file_name)
+print(cookies_file)
 def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
@@ -32,6 +41,7 @@ def main():
             json.dump(cookies, f, indent=2)
 
         print("✅ Cookies saved to cookies.json")
+        input("Press Enter to close the browser...")
         browser.close()
 
 if __name__ == "__main__":

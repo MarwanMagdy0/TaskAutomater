@@ -10,8 +10,21 @@ def wait_for_selector(page, selector, timeout=5000):
         return True
     except Exception:
         return False
-    
 
+def click_element(page, selector, timeout=5000):
+    try:
+        page.wait_for_selector(selector, timeout=timeout)
+        page.click(selector)
+        return True
+    except Exception as e:
+        return False
+
+def fill_input(page, selector, value, timeout=5000):
+    try:
+        page.locator(selector).fill(value, timeout=timeout)
+        return True
+    except:
+        return False
 
 class CaptchaViewer:
     def __init__(self):

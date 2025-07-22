@@ -1,8 +1,14 @@
 import json
 from playwright.sync_api import sync_playwright
+import sys
 
-cookies_file = "tradingview_cookies/i4vewhrlln.json"
+if len(sys.argv) < 2:
+    print("Usage: python load_cookies.py <cookies_file>")
+    sys.exit(1)
+
+cookies_file = f"tradingview_cookies_new/{sys.argv[1]}.json"
 target_url = "https://ar.tradingview.com/settings/#account-settings"  # Or wherever your cookies belong
+print(cookies_file)
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
