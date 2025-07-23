@@ -52,13 +52,13 @@ class IMSClient:
 
         data_url = f"{self.BASE_URL}/ints/client/res/data_smscdr.php"
 
-        from_time = datetime.now() - timedelta(hours=3, minutes=5)
+        from_time = datetime.now() - timedelta(hours=3, minutes=2)
         to_time = datetime.now()
 
         params = {
             "fdate1": from_time.strftime("%Y-%m-%d %H:%M:%S"),
             "fdate2": to_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "iDisplayLength": "5",
+            "iDisplayLength": "3",
         }
 
         headers = {
@@ -72,7 +72,7 @@ class IMSClient:
             resp = self.session.get(data_url, params=params, headers=headers, timeout=1)
             data = resp.json().get("aaData", [])
             for row in data:
-                print("[*] Checking row:", row)
+                # print("[*] Checking row:", row)
                 if len(row) >= 3 and row[2] == number_to_check:
                     return True
             return False

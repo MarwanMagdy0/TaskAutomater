@@ -1,6 +1,7 @@
+from datetime import datetime
 import json
 import time
-
+import os
 class PhoneStatusManager:
     def __init__(self, filename="numbers.json"):
         self.filename = filename
@@ -82,6 +83,44 @@ class EmailManager:
             self.save_data()
         else:
             raise ValueError(f"Email {email} not found in data.")
+
+
+class FileManager:
+    def __init__(self, filepath):
+        self.filepath = filepath
+        self.data = {}
+        self._load()
+
+    def _load(self):
+        if os.path.exists(self.filepath):
+            try:
+                with open(self.filepath, 'r') as f:
+                    self.data = json.load(f)
+            except json.JSONDecodeError:
+                self.data = {}
+        else:
+            self._save()
+
+    def _save(self):
+        with open(self.filepath, 'w') as f:
+            json.dump(self.data, f, indent=2)
+
+    def _current_time_am_pm(self):
+        now = datetime.now()
+        return now.strftime("%Y-%m-%d %I:%M:%S %p")
+
+    def log_trigger(self, key):
+        if key not in self.data:
+            self.data[key] = []
+        self.data[key].append(self._current_time_am_pm())
+        self._save()
+
+    def get_logs(self, key):
+        return self.data.get(key, [])
+
+    def all_data(self):
+        return self.data
+
 
 
 def time_logg(message: str):

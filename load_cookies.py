@@ -6,7 +6,7 @@ if len(sys.argv) < 2:
     print("Usage: python load_cookies.py <cookies_file>")
     sys.exit(1)
 
-cookies_file = f"tradingview_cookies_new/{sys.argv[1]}.json"
+cookies_file = f"tradingview_cookies_23_7/{sys.argv[1]}.json"
 target_url = "https://ar.tradingview.com/settings/#account-settings"  # Or wherever your cookies belong
 print(cookies_file)
 
