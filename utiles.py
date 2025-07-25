@@ -104,6 +104,11 @@ class FileManager:
     def _save(self):
         with open(self.filepath, 'w') as f:
             json.dump(self.data, f, indent=2)
+    
+    def init_key(self, key):
+        if key not in self.data:
+            self.data[key] = []
+            self._save()
 
     def _current_time_am_pm(self):
         now = datetime.now()

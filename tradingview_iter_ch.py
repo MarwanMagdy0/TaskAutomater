@@ -14,7 +14,7 @@ files = os.listdir(directory)
 print("Files in directory:", files)
 for idx, cookies_file in enumerate(files):
     frequency = file_manager.get_frequency(os.path.join(directory, cookies_file))
-    if frequency > 10:
+    if frequency > 9:
         print(f"Skipping {cookies_file} as it has {frequency} triggers.")
         continue
 
@@ -44,8 +44,8 @@ for idx, cookies_file in enumerate(files):
                 print(f"Error loading page: {e}")
                 time.sleep(1)
         try:
-            page.wait_for_selector("text=Add phone", timeout=240000)
-            page.click("text=Add phone")
+            page.wait_for_selector("text=إضافة هاتف", timeout=240000)
+            page.click("text=إضافة هاتف")
             time.sleep(2)  # Wait for the dialog to appear
             dropdown_button = page.locator('button[role="combobox"][aria-labelledby="country-select-id"]')
             dropdown_button.wait_for(state="visible", timeout=10000)

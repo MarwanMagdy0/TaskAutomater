@@ -1,8 +1,9 @@
 from playwright.sync_api import sync_playwright
+from utiles import FileManager
 import json
 import time
 
-generate_cookies_file = lambda file_name : f"tradingview_cookies_24_7/{file_name}.json"
+generate_cookies_file = lambda file_name : f"tradingview_cookies_25_7/{file_name}.json"
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
@@ -83,6 +84,10 @@ with sync_playwright() as p:
     print(f"Cookies will be saved to: {cookies_file}")
     with open(cookies_file, "w") as f:
         json.dump(cookies, f, indent=2)
+    
+    file_manager = FileManager("emails.json")
+    file_manager.init_key(cookies_file)
+    print(f"Email {email_value} saved with cookies in {cookies_file}.")
 
     print("✅ Cookies saved to cookies.json")
     # input("Press Enter to close the browser...")
