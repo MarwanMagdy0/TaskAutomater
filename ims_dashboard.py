@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 # ────────────────────── Worker Thread ────────────────────── 
 class Worker(QThread):
     finished = pyqtSignal(tuple)      # (main value, header text)
@@ -126,7 +128,7 @@ class LoginFetcher(QWidget):
         self._last_value_text = None
 
         self._player = QMediaPlayer()
-        mp3_path = os.path.abspath("money_sound.mp3")
+        mp3_path = os.path.abspath("assets/money_sound.mp3")
         print("Loading MP3 from:", mp3_path)
         if os.path.exists(mp3_path):
             self._player.setMedia(QMediaContent(QUrl.fromLocalFile(mp3_path)))

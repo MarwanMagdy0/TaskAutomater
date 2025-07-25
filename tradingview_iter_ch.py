@@ -13,11 +13,16 @@ directory = "tradingview_cookies_23_7"
 files = os.listdir(directory)
 print("Files in directory:", files)
 for idx, cookies_file in enumerate(files):
+    frequency = file_manager.get_frequency(os.path.join(directory, cookies_file))
+    if frequency > 10:
+        print(f"Skipping {cookies_file} as it has {frequency} triggers.")
+        continue
+
     print(f"[{idx:02}] Processing file: {cookies_file}")
     with sync_playwright() as p:
         number = phone_manager.get_next_number_status()
         print(f"Using number: {number}")
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=True)
         context = browser.new_context()
 
         # Step 1: Load cookies from file
@@ -30,20 +35,28 @@ for idx, cookies_file in enumerate(files):
         # Step 3: Open page with those cookies
         page = context.new_page()
         page.wait_for_timeout(1000)  # Wait for 1 seconds to ensure the page is fully loaded
-        page.goto("https://ar.tradingview.com/settings/#account-settings", wait_until="load")
+        while True:
+            try:
+                page.goto("https://ar.tradingview.com/settings/#account-settings", wait_until="load")
+                print("Page loaded with cookies.")
+                break
+            except Exception as e:
+                print(f"Error loading page: {e}")
+                time.sleep(1)
         try:
             page.wait_for_selector("text=Add phone", timeout=240000)
             page.click("text=Add phone")
             time.sleep(2)  # Wait for the dialog to appear
-            if not click_element(page, '//*[@id=":ro:"]', timeout=500):
-                if not click_element(page, '//*[@id=":rt:"]', timeout=500):
-                    click_element(page, '//*[@id=":rg:"]', timeout=500)
+            dropdown_button = page.locator('button[role="combobox"][aria-labelledby="country-select-id"]')
+            dropdown_button.wait_for(state="visible", timeout=10000)
+            dropdown_button.click()
 
             page.wait_for_selector("text=موزانبيق", timeout=240000)
             page.click("text=موزانبيق")
-
-            if not fill_input(page, '//*[@id=":rf:"]', f"{number}"[3:], timeout=1000):
-                fill_input(page, '//*[@id=":rn:"]', f"{number}"[3:], timeout=1000)
+            
+            phone_input = page.locator('input[data-qa-id="ui-lib-Input-input"]')
+            phone_input.wait_for(state="visible", timeout=10000)
+            phone_input.fill(f"{number}"[3:])
 
             time.sleep(1)
 
@@ -62,8 +75,9 @@ for idx, cookies_file in enumerate(files):
                         time_logg(f"Number {number} does not exist in IMS logs.")
                         phone_manager.update_number_status(number, is_working=False)
             
-            page.wait_for_timeout(5)  # Wait for 5 seconds to ensure the page is fully loaded
+            page.wait_for_timeout(500)  # Wait for 5 seconds to ensure the page is fully loaded
             browser.close()
         except Exception as e:
             time_logg(f"An error occurred: {e}")
             browser.close()
+            

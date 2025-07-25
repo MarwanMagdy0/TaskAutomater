@@ -120,6 +120,9 @@ class FileManager:
 
     def all_data(self):
         return self.data
+    
+    def get_frequency(self, key):
+        return len(self.data.get(key, []))
 
 
 
