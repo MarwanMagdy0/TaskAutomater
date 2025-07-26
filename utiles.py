@@ -1,135 +1,109 @@
-from datetime import datetime
-import json
+from datetime import datetime, timedelta
+import sqlite3
 import time
 import os
-class PhoneStatusManager:
-    def __init__(self, filename="numbers.json"):
-        self.filename = filename
-        self._load()
 
-    def _load(self):
-        with open(self.filename, "r") as f:
-            self.data = json.load(f)
-
-    def _save(self):
-        with open(self.filename, "w") as f:
-            json.dump(self.data, f, indent=2)
-
-    def get_next_number_status(self):
-        self._load()
-        min_number = None
-        min_time = float("inf")
-
-        for number, info in self.data.items():
-            if info["is_working"] and info["last_checked"] < min_time:
-                min_time = info["last_checked"]
-                min_number = number
-
-        if min_number is not None:
-            # Update the last_checked time to the current time
-            self.data[min_number]["last_checked"] = int(time.time())
-            self._save()
-            return min_number
-        return None
-
-
-    def update_number_status(self, number, is_working):
-        if number not in self.data:
-            raise ValueError(f"Number {number} not found in data.")
-
-        self.data[number]["is_working"] = is_working
-        self._save()
-        print(f"Updated {number}: is_working={is_working}")
-
+conn = sqlite3.connect("database/database.db", check_same_thread=False)
+conn.row_factory = sqlite3.Row
+cursor = conn.cursor()
 
 class EmailManager:
-    def __init__(self, filepath='emails.json'):
-        self.filepath = filepath
-        self.load_data()
+    @staticmethod
+    def insert_email_with_cookies(self, email: str, cookies: str):
+        """Insert a new email with cookies into the emails table if it doesn't already exist."""
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    def load_data(self):
-        with open(self.filepath, 'r') as f:
-            self.data = json.load(f)
+        cursor.execute("SELECT id FROM emails WHERE email = ?", (email,))
+        existing = cursor.fetchone()
 
-    def save_data(self):
-        with open(self.filepath, 'w') as f:
-            json.dump(self.data, f, indent=2)
+        if existing:
+            print(f"[!] Email already exists: {email}")
+            return
 
-    def get_email(self):
-        for email, info in self.data.items():
-            if not info.get("used", False):
-                self.data[email]["last_checked"] = int(time.time())
-                self.save_data()
-                return email
-        return None  # No unused emails found
+        cursor.execute(
+            "INSERT INTO emails (email, cookies, datetime) VALUES (?, ?, ?)",
+            (email, cookies, now)
+        )
+        conn.commit()
+        print(f"[+] Inserted email: {email}")
 
-    def increment_email_usage(self, email):
-        if email in self.data:
-            self.data[email]["checks"] = self.data[email].get("checks", 0) + 1
-            self.save_data()
+    @staticmethod
+    def get_email_cookies_by_status():        
+        query = """
+            WITH log_summary AS (
+                SELECT
+                    e.id AS email_id,
+                    e.email,
+                    e.cookies,
+                    COUNT(l.id) AS log_count,
+                    MAX(l.datetime) AS last_log_time
+                FROM emails e
+                LEFT JOIN email_logs l
+                    ON e.id = l.email_id AND l.datetime >= datetime('now', 'localtime', '-24 hours')
+                GROUP BY e.id
+            )
+            SELECT email_id, email, cookies, log_count, last_log_time, COUNT(*) AS total_logs
+            FROM log_summary
+            WHERE
+                log_count = 0
+                OR (log_count IN (1, 2) AND (last_log_time IS NULL OR datetime(last_log_time) <= datetime('now', 'localtime', '-3 minutes')))
+                OR (log_count = 3 AND (last_log_time IS NULL OR datetime(last_log_time) <= datetime('now', 'localtime', '-3 hours')))
+                OR (log_count = 4 AND (last_log_time IS NULL OR datetime(last_log_time) <= datetime('now', 'localtime', '-4 hours')))
+            LIMIT 1;
+        """
+        
+        cursor.execute(query)
+        row = cursor.fetchone()
+                
+        return row["email_id"], row["email"], row["cookies"], row["log_count"], row["total_logs"] if row else (None, None, None, 0)
+
+    @staticmethod
+    def log_status(email: str, status: str):
+        """Log a new status for the given email address."""
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Step 1: Get the email ID
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM emails WHERE email = ?", (email,))
+        result = cursor.fetchone()
+
+        if result:
+            email_id = result["id"]
+            # Step 2: Log the status
+            cursor.execute(
+                "INSERT INTO email_logs (email_id, datetime, status) VALUES (?, ?, ?)",
+                (email_id, now, status)
+            )
+            conn.commit()
         else:
-            raise ValueError(f"Email {email} not found in data.")
-
-    def restore_email(self, email):
-        if email in self.data:
-            self.data[email]["used"] = False
-            self.save_data()
-        else:
-            raise ValueError(f"Email {email} not found in data.")
-    
-    def email_is_used(self, email):
-        if email in self.data:
-            self.data[email]["used"] = True
-            self.save_data()
-        else:
-            raise ValueError(f"Email {email} not found in data.")
+            print(f"[!] Email not found: {email}")
 
 
-class FileManager:
-    def __init__(self, filepath):
-        self.filepath = filepath
-        self.data = {}
-        self._load()
+class NumbersManager:
+    def get_available_number(self):
+        """Return the oldest available number that is working and not archived, ordered by last_checked."""
+        cursor.execute("""
+            SELECT id, number 
+            FROM numbers 
+            WHERE is_working = 1 AND is_archived = 0 
+            ORDER BY 
+                CASE 
+                    WHEN last_checked IS NULL THEN 0 
+                    ELSE 1 
+                END,
+                last_checked ASC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+        if row:
+            return row["id"], row["number"]
+        return None
 
-    def _load(self):
-        if os.path.exists(self.filepath):
-            try:
-                with open(self.filepath, 'r') as f:
-                    self.data = json.load(f)
-            except json.JSONDecodeError:
-                self.data = {}
-        else:
-            self._save()
-
-    def _save(self):
-        with open(self.filepath, 'w') as f:
-            json.dump(self.data, f, indent=2)
-    
-    def init_key(self, key):
-        if key not in self.data:
-            self.data[key] = []
-            self._save()
-
-    def _current_time_am_pm(self):
-        now = datetime.now()
-        return now.strftime("%Y-%m-%d %I:%M:%S %p")
-
-    def log_trigger(self, key):
-        if key not in self.data:
-            self.data[key] = []
-        self.data[key].append(self._current_time_am_pm())
-        self._save()
-
-    def get_logs(self, key):
-        return self.data.get(key, [])
-
-    def all_data(self):
-        return self.data
-    
-    def get_frequency(self, key):
-        return len(self.data.get(key, []))
-
-
+    def update_number_status(self, number_id: int, is_working: bool):
+        """Update the status of a number by its ID."""
+        cursor.execute("UPDATE numbers SET is_working = ? WHERE id = ?", (is_working, number_id))
+        conn.commit()
+        print(f"[+] Updated number ID {number_id} to {'working' if is_working else 'not working'}.")
 
 def time_logg(message: str):
     """Log a message with the current time."""
@@ -137,10 +111,6 @@ def time_logg(message: str):
     print(f"[{current_time}] {message}")
 
 if __name__ == "__main__":
-    manager = PhoneStatusManager("numbers.json")
-    # Get the number with the earliest last_checked time
-    number = manager.get_next_number_status()
-    print(f"Next number: {number}")
-
-    # Update a number's status
-    manager.update_number_status(number, is_working=False)
+    email_id, email, cookies, log_count, total_logs = EmailManager.get_email_cookies_by_status()
+    print(email_id, email, log_count, total_logs)
+    # EmailManager.log_status(email, "Test status")

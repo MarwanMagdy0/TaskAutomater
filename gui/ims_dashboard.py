@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys, re, requests, os
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup

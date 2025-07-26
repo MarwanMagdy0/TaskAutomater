@@ -1,5 +1,5 @@
 from playwright.sync_api import sync_playwright
-from utiles import FileManager
+from utiles import EmailManager
 import json
 import time
 
@@ -85,8 +85,10 @@ with sync_playwright() as p:
     with open(cookies_file, "w") as f:
         json.dump(cookies, f, indent=2)
     
-    file_manager = FileManager("emails.json")
-    file_manager.init_key(cookies_file)
+    # file_manager = FileManager("emails.json")
+    # file_manager.init_key(cookies_file)
+    email_manager = EmailManager()
+    email_manager.insert_email_with_cookies(email_value, cookies)
     print(f"Email {email_value} saved with cookies in {cookies_file}.")
 
     print("✅ Cookies saved to cookies.json")
