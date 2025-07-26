@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QUrl
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QProgressBar,
-    QTableWidget, QTableWidgetItem, QHeaderView
+    QTableWidget, QTableWidgetItem, QHeaderView, QHBoxLayout, QFrame
 )
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
@@ -24,19 +24,16 @@ class Worker(QThread):
             signin_url = f"{base_url}/ints/signin"
             data_url = f"{base_url}/ints/client/res/data_smscdr.php"
 
-            # Step 1: CAPTCHA
             resp = session.get(login_url, timeout=10)
             soup = BeautifulSoup(resp.text, "html.parser")
             divs = soup.find_all("div", class_="col-sm-6")
             qtxt = next((d.get_text(strip=True) for d in divs if "What is" in d.text and "=" in d.text), None)
             capt = eval(re.search(r'What is (.+?)=', qtxt).group(1).strip()) if qtxt else None
 
-            # Step 2: Login
             payload = {"username": "22momagdy", "password": "22momagdy22", "capt": str(capt)}
             headers = {"Referer": login_url, "Origin": base_url, "User-Agent": "Mozilla/5.0"}
             resp2 = session.post(signin_url, data=payload, headers=headers, allow_redirects=True, timeout=10)
 
-            # Step 3: Dashboard value
             soup2 = BeautifulSoup(resp2.text, "html.parser")
             val_tag = soup2.find("h4", class_="fs-20 fw-bold mb-1 text-fixed-white")
             value = val_tag.get_text(strip=True) if val_tag else "???"
@@ -46,7 +43,6 @@ class Worker(QThread):
 
             self.finished.emit((value, header_txt))
 
-            # Step 4: SMSCDR fetch
             from_time = datetime.now() - timedelta(hours=3, minutes=10)
             to_time = datetime.now()
 
@@ -89,7 +85,7 @@ class LoginFetcher(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Live Value Monitor")
-        self.resize(700, 500)
+        self.resize(450, 600)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
         vbox = QVBoxLayout(self)
@@ -101,7 +97,7 @@ class LoginFetcher(QWidget):
 
         self.value_lbl = QLabel("…")
         self.value_lbl.setAlignment(Qt.AlignCenter)
-        self.value_lbl.setStyleSheet("font-size:64px;font-weight:700;color:#333;")
+        self.value_lbl.setStyleSheet("font-size:64px;font-weight:700;color:#3366cc;")
         vbox.addWidget(self.value_lbl)
 
         self.progress = QProgressBar()
@@ -113,8 +109,32 @@ class LoginFetcher(QWidget):
         self.table.setHorizontalHeaderLabels(["Timestamp", "Range", "Number"])
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.verticalHeader().setVisible(False)
-        self.table.setStyleSheet("font-family: Consolas; font-size: 13px;")
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        self.table.setStyleSheet("""
+            QTableWidget {
+                font-family: 'Segoe UI';
+                font-size: 13px;
+                border: 1px solid #ddd;
+                gridline-color: #ccc;
+                background-color: #fafafa;
+                alternate-background-color: #f0f0f0;
+            }
+            QHeaderView::section {
+                background-color: #e0e0e0;
+                font-weight: bold;
+                padding: 6px;
+                border: 1px solid #ddd;
+            }
+            QTableWidget::item {
+                padding: 6px;
+                border: none;
+            }
+        """)
+
+        self.table.setAlternatingRowColors(True)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.Stretch)
+
         vbox.addWidget(self.table)
 
         self.anim = QTimer(self)
@@ -129,14 +149,8 @@ class LoginFetcher(QWidget):
 
         self._player = QMediaPlayer()
         mp3_path = os.path.abspath("assets/money_sound.mp3")
-        print("Loading MP3 from:", mp3_path)
         if os.path.exists(mp3_path):
             self._player.setMedia(QMediaContent(QUrl.fromLocalFile(mp3_path)))
-        else:
-            print("MP3 file not found!")
-
-        self._player.mediaStatusChanged.connect(lambda s: print("Media status:", s))
-        self._player.error.connect(lambda e: print("Media error:", self._player.errorString()))
 
         self._launch_worker()
 
@@ -165,9 +179,7 @@ class LoginFetcher(QWidget):
     def _update_ui(self, data):
         value, header = data
 
-        # Sound only if value_lbl text changed
         if self._last_value_text != value:
-            print(f"Value changed: {self._last_value_text} -> {value}")
             self._player.setPosition(0)
             self._player.play()
             self._last_value_text = value
@@ -183,7 +195,10 @@ class LoginFetcher(QWidget):
         for i, row in enumerate(sms_list):
             self.table.insertRow(i)
             for j, item in enumerate(row):
-                self.table.setItem(i, j, QTableWidgetItem(item))
+                qitem = QTableWidgetItem(item)
+                qitem.setTextAlignment(Qt.AlignCenter)
+                self.table.setItem(i, j, qitem)
+
 
 
 # ─────────────────── Run the App ───────────────────

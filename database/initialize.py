@@ -27,7 +27,6 @@ CREATE TABLE IF NOT EXISTS email_logs (
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS numbers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    Range TEXT NOT NULL,
     number TEXT NOT NULL,
     is_working BOOLEAN NOT NULL DEFAULT 1,
     is_archived BOOLEAN NOT NULL DEFAULT 0,

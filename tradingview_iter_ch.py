@@ -9,12 +9,12 @@ phone_manager = PhoneStatusManager("numbers.json")
 ims_client = IMSClient()
 file_manager = FileManager("emails.json")
 # List all files in the directory
-directory = "tradingview_cookies_23_7"
+directory = "tradingview_cookies_24_7"
 files = os.listdir(directory)
 print("Files in directory:", files)
 for idx, cookies_file in enumerate(files):
     frequency = file_manager.get_frequency(os.path.join(directory, cookies_file))
-    if frequency > 9:
+    if frequency > 12:
         print(f"Skipping {cookies_file} as it has {frequency} triggers.")
         continue
 
@@ -50,7 +50,6 @@ for idx, cookies_file in enumerate(files):
             dropdown_button = page.locator('button[role="combobox"][aria-labelledby="country-select-id"]')
             dropdown_button.wait_for(state="visible", timeout=10000)
             dropdown_button.click()
-
             page.wait_for_selector("text=موزانبيق", timeout=240000)
             page.click("text=موزانبيق")
             
