@@ -52,7 +52,7 @@ class IMSClient:
 
         data_url = f"{self.BASE_URL}/ints/client/res/data_smscdr.php"
 
-        from_time = datetime.now() - timedelta(hours=3, minutes=2)
+        from_time = datetime.now() - timedelta(hours=3, minutes=1)
         to_time = datetime.now()
 
         params = {

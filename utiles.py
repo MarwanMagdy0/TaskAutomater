@@ -9,7 +9,7 @@ cursor = conn.cursor()
 
 class EmailManager:
     @staticmethod
-    def insert_email_with_cookies(self, email: str, cookies: str):
+    def insert_email_with_cookies(email: str, cookies: str):
         """Insert a new email with cookies into the emails table if it doesn't already exist."""
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -42,7 +42,7 @@ class EmailManager:
                     ON e.id = l.email_id AND l.datetime >= datetime('now', 'localtime', '-24 hours')
                 GROUP BY e.id
             )
-            SELECT email_id, email, cookies, log_count, last_log_time, COUNT(*) AS total_logs
+            SELECT email_id, email, cookies, log_count, last_log_time, COUNT(*) AS remaining_emails
             FROM log_summary
             WHERE
                 log_count = 0
@@ -55,7 +55,7 @@ class EmailManager:
         cursor.execute(query)
         row = cursor.fetchone()
                 
-        return row["email_id"], row["email"], row["cookies"], row["log_count"], row["total_logs"] if row else (None, None, None, 0)
+        return row["email_id"], row["email"], row["cookies"], row["log_count"], row["remaining_emails"] if row else (None, None, None, 0)
 
     @staticmethod
     def log_status(email: str, status: str):
@@ -81,7 +81,7 @@ class EmailManager:
 
 class NumbersManager:
     def get_available_number(self):
-        """Return the oldest available number that is working and not archived, ordered by last_checked."""
+        """Return the oldest available number that is working and not archived, and update its last_checked timestamp."""
         cursor.execute("""
             SELECT id, number 
             FROM numbers 
@@ -96,14 +96,39 @@ class NumbersManager:
         """)
         row = cursor.fetchone()
         if row:
-            return row["id"], row["number"]
+            number_id = row["id"]
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            cursor.execute(
+                "UPDATE numbers SET last_checked = ? WHERE id = ?",
+                (now, number_id)
+            )
+            conn.commit()
+
+            print(f"[+] Number ID {number_id} marked as last checked at {now}.")
+            return number_id, row["number"]
+
         return None
 
     def update_number_status(self, number_id: int, is_working: bool):
-        """Update the status of a number by its ID."""
-        cursor.execute("UPDATE numbers SET is_working = ? WHERE id = ?", (is_working, number_id))
+        """Update the status and last_checked of a number. If working, increment hits."""
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        if is_working:
+            cursor.execute("""
+                UPDATE numbers 
+                SET is_working = ?, last_checked = ?, hits = hits + 1 
+                WHERE id = ?
+            """, (is_working, now, number_id))
+        else:
+            cursor.execute("""
+                UPDATE numbers 
+                SET is_working = ?, last_checked = ? 
+                WHERE id = ?
+            """, (is_working, now, number_id))
+
         conn.commit()
-        print(f"[+] Updated number ID {number_id} to {'working' if is_working else 'not working'}.")
+        print(f"[+] Updated number ID {number_id} to {'[working]' if is_working else '[not working]'} at {now}.")
 
 def time_logg(message: str):
     """Log a message with the current time."""
@@ -113,4 +138,4 @@ def time_logg(message: str):
 if __name__ == "__main__":
     email_id, email, cookies, log_count, total_logs = EmailManager.get_email_cookies_by_status()
     print(email_id, email, log_count, total_logs)
-    # EmailManager.log_status(email, "Test status")
+    EmailManager.log_status("3s3m0qb9tf", "CODE_SENT")

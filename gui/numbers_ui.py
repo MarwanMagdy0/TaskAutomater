@@ -17,7 +17,6 @@ class AddNumbersDialog(QDialog):
         self.resize(400, 300)
 
         layout = QVBoxLayout(self)
-
         self.text_edit = QTextEdit()
         self.text_edit.setPlaceholderText("Paste numbers here...")
         layout.addWidget(self.text_edit)
@@ -31,11 +30,12 @@ class AddNumbersDialog(QDialog):
         text = self.text_edit.toPlainText()
         return list(set(re.findall(r'\b\d{4,}\b', text)))  # unique numbers
 
+
 class NumberTrackerApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Number Tracker")
-        self.resize(650, 550)
+        self.resize(700, 550)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
         self.layout = QVBoxLayout()
@@ -47,11 +47,23 @@ class NumberTrackerApp(QWidget):
         title.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(title)
 
-        # Top Stats
+        # Top Controls (Add/Delete + Stats)
+        top_controls_layout = QHBoxLayout()
+
+        self.add_button = QPushButton("➕ Add Numbers")
+        self.delete_all_button = QPushButton("🗑️ Delete All (Not Archived)")
+        for btn in [self.add_button, self.delete_all_button]:
+            btn.setStyleSheet("font-size: 13px; padding: 6px 12px;")
+        top_controls_layout.addWidget(self.add_button)
+        top_controls_layout.addWidget(self.delete_all_button)
+
+        top_controls_layout.addStretch()
+
         self.top_stats_label = QLabel("Working: 0 | Not Working: 0")
-        self.top_stats_label.setAlignment(Qt.AlignCenter)
         self.top_stats_label.setStyleSheet("font-size: 14px; padding: 4px;")
-        self.layout.addWidget(self.top_stats_label)
+        top_controls_layout.addWidget(self.top_stats_label)
+
+        self.layout.addLayout(top_controls_layout)
 
         # Table
         self.table = QTableWidget()
@@ -81,14 +93,12 @@ class NumberTrackerApp(QWidget):
         header.setSectionResizeMode(QHeaderView.Stretch)
         self.layout.addWidget(self.table)
 
-        # Bottom Row
+        # Bottom Controls (Archive Buttons + Total Info)
         bottom_layout = QHBoxLayout()
 
         self.archive_all_button = QPushButton("📦 Archive All")
-        self.archive_bad_button = QPushButton("🚫 Archive Not Working")
-        self.add_button = QPushButton("➕ Add Numbers")
-
-        for btn in [self.archive_all_button, self.archive_bad_button, self.add_button]:
+        self.archive_not_working_button = QPushButton("❌ Archive Not Working")
+        for btn in [self.archive_all_button, self.archive_not_working_button]:
             btn.setStyleSheet("font-size: 13px; padding: 6px 12px;")
             bottom_layout.addWidget(btn)
 
@@ -102,10 +112,11 @@ class NumberTrackerApp(QWidget):
 
         # Connect
         self.archive_all_button.clicked.connect(self.archive_all)
-        self.archive_bad_button.clicked.connect(self.archive_not_working)
+        self.archive_not_working_button.clicked.connect(self.archive_not_working)
+        self.delete_all_button.clicked.connect(self.delete_all_not_archived)
         self.add_button.clicked.connect(self.show_add_dialog)
 
-        # Start auto-refresh
+        # Auto refresh
         self.refresh_timer = QTimer(self)
         self.refresh_timer.timeout.connect(self.load_data)
         self.refresh_timer.start(10000)  # 10 seconds
@@ -120,7 +131,6 @@ class NumberTrackerApp(QWidget):
     def load_data(self):
         conn = self.get_connection()
         cur = conn.cursor()
-
         cur.execute("""
             SELECT number, last_checked, is_working, hits
             FROM numbers
@@ -132,7 +142,7 @@ class NumberTrackerApp(QWidget):
 
         self.table.setSortingEnabled(False)
         self.table.setRowCount(len(rows))
-        working, not_working, total_hits = 0, 0, 0
+        working = not_working = total_hits = 0
 
         for row_idx, (number, last_checked, is_working, hits) in enumerate(rows):
             self._set_table_item(row_idx, 0, number)
@@ -155,7 +165,7 @@ class NumberTrackerApp(QWidget):
         self.table.setItem(row, col, item)
 
     def archive_all(self):
-        if self.ask("Are you sure you want to archive all?"):
+        if self.ask("Are you sure you want to archive all numbers?"):
             conn = self.get_connection()
             conn.execute("UPDATE numbers SET is_archived = 1 WHERE is_archived = 0")
             conn.commit()
@@ -163,9 +173,17 @@ class NumberTrackerApp(QWidget):
             self.load_data()
 
     def archive_not_working(self):
-        if self.ask("Archive only not working numbers?"):
+        if self.ask("Are you sure you want to archive all not-working numbers?"):
             conn = self.get_connection()
-            conn.execute("UPDATE numbers SET is_archived = 1 WHERE is_working = 0 AND is_archived = 0")
+            conn.execute("UPDATE numbers SET is_archived = 1 WHERE is_archived = 0 AND is_working = 0")
+            conn.commit()
+            conn.close()
+            self.load_data()
+
+    def delete_all_not_archived(self):
+        if self.ask("Are you sure you want to DELETE all unarchived numbers? This cannot be undone."):
+            conn = self.get_connection()
+            conn.execute("DELETE FROM numbers WHERE is_archived = 0")
             conn.commit()
             conn.close()
             self.load_data()
@@ -190,6 +208,7 @@ class NumberTrackerApp(QWidget):
 
     def ask(self, question):
         return QMessageBox.question(self, "Confirm", question, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

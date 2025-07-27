@@ -1,25 +1,26 @@
-import json
+import sqlite3, json
 from playwright.sync_api import sync_playwright
 import sys
 
+conn = sqlite3.connect('database/database.db')
+cursor = conn.cursor()
+target_url = "https://ar.tradingview.com/pricing/?source=account_activate&feature=redirect"
 if len(sys.argv) < 2:
     print("Usage: python load_cookies.py <cookies_file>")
     sys.exit(1)
 
-cookies_file = f"tradingview_cookies_25_7/{sys.argv[1]}.json"
-target_url = "https://ar.tradingview.com/settings/#account-settings"  # Or wherever your cookies belong
-print(cookies_file)
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
     context = browser.new_context()
 
-    # Step 1: Load cookies from file
-    with open(cookies_file, "r") as f:
-        cookies = json.load(f)
-
+    cursor.execute("SELECT cookies FROM emails WHERE email = ?", (sys.argv[1],))
+    cookies_row = cursor.fetchone()
+    if not cookies_row:
+        print(f"No cookies found for email: {sys.argv[1]}")
+        sys.exit(1)
     # Step 2: Set cookies to the context
-    context.add_cookies(cookies)
+    context.add_cookies(json.loads(cookies_row[0]))
 
     # Step 3: Open page with those cookies
     page = context.new_page()

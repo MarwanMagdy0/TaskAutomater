@@ -10,12 +10,12 @@ numbers_manager = NumbersManager()
 
 
 while True:
-    email_id, email, cookies, log_count, total_logs = EmailManager.get_email_cookies_by_status()
+    email_id, email, cookies, log_count, remaining_emails = EmailManager.get_email_cookies_by_status()
     if email is None:
         time_logg("No available email found.")
         break
 
-    print(f"* [{email:02}] Using email: {email}, log count: {log_count}, total logs: {total_logs}")
+    print(f"* [{email}] Using email: {email}, log count: {log_count}, remaining emails: {remaining_emails}")
     with sync_playwright() as p:
         number_id, number = numbers_manager.get_available_number()
         print(f"Using number: {number}")
@@ -23,7 +23,7 @@ while True:
         context = browser.new_context()
 
         # Step 2: Set cookies to the context
-        context.add_cookies(cookies)
+        context.add_cookies(json.loads(cookies))
 
         # Step 3: Open page with those cookies
         page = context.new_page()
@@ -43,8 +43,9 @@ while True:
             dropdown_button = page.locator('button[role="combobox"][aria-labelledby="country-select-id"]')
             dropdown_button.wait_for(state="visible", timeout=10000)
             dropdown_button.click()
-            page.wait_for_selector("text=موزانبيق", timeout=240000)
-            page.click("text=موزانبيق")
+            # page.wait_for_timeout(10000000000)  # Wait for the dropdown to open
+            page.wait_for_selector("text=+258", timeout=240000)
+            page.click("text=+258")
             
             phone_input = page.locator('input[data-qa-id="ui-lib-Input-input"]')
             phone_input.wait_for(state="visible", timeout=10000)
@@ -56,6 +57,10 @@ while True:
             if wait_for_selector(page, "text=يبدو أنك حاولت التحقق من رقم هاتفك عدة مرات. عد غدًا للمحاولة مرة أخرى.", timeout=5000):
                 print("Too many attempts")
                 EmailManager.log_status(email, "TOO_MANY_ATTEMPTS")
+            
+            elif wait_for_selector(page, "text=حدث خطأ ما", timeout=100):
+                print("An error occurred while requesting the code.")
+                EmailManager.log_status(email, "ERROR_REQUESTING_CODE")
             else:
                 if wait_for_selector(page, "text=لقد أرسلنا الرمز", timeout=240000):
                     EmailManager.log_status(email, "CODE_SENT")

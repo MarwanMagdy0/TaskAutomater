@@ -3,7 +3,7 @@ import sqlite3
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QComboBox, QTableWidget, QTableWidgetItem,
-    QHeaderView, QLabel, QCheckBox
+    QHeaderView, QLabel, QCheckBox, QLineEdit
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
@@ -29,7 +29,7 @@ class FilteredEmailLogsViewer(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Email Activity Overview (Last 24h)")
-        self.resize(400, 600)
+        self.resize(500, 600)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
         main_layout = QVBoxLayout()
@@ -44,17 +44,12 @@ class FilteredEmailLogsViewer(QWidget):
 
         # Controls layout
         top_controls = QHBoxLayout()
-        top_controls.setSpacing(15)
+        top_controls.setSpacing(10)
 
         top_controls.addWidget(QLabel("Date:"))
         self.date_combo = QComboBox()
-        self.date_combo.setMinimumWidth(160)
-        self.date_combo.setStyleSheet("""
-            QComboBox {
-                padding: 5px;
-                font-size: 13px;
-            }
-        """)
+        self.date_combo.setMinimumWidth(150)
+        self.date_combo.setStyleSheet("QComboBox { padding: 5px; font-size: 13px; }")
         self.date_combo.currentIndexChanged.connect(self.update_table)
         top_controls.addWidget(self.date_combo)
 
@@ -63,8 +58,14 @@ class FilteredEmailLogsViewer(QWidget):
         self.summary_checkbox.stateChanged.connect(self.update_table)
         top_controls.addWidget(self.summary_checkbox)
 
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search email...")
+        self.search_input.setStyleSheet("font-size: 13px; padding: 4px;")
+        self.search_input.textChanged.connect(self.update_table)
+        top_controls.addWidget(self.search_input)
+
         self.total_logs_label = QLabel("Total Logs Since 3 AM: ...")
-        self.total_logs_label.setStyleSheet("font-size: 13px; color: #444; padding-left: 10px;")
+        self.total_logs_label.setStyleSheet("font-size: 13px; color: #444; padding-left: 8px;")
         top_controls.addStretch()
         top_controls.addWidget(self.total_logs_label)
 
@@ -121,6 +122,7 @@ class FilteredEmailLogsViewer(QWidget):
         cur.execute("SELECT DISTINCT DATE(datetime) FROM emails ORDER BY datetime DESC")
         dates = [row[0] for row in cur.fetchall()]
         self.date_combo.clear()
+        self.date_combo.addItem("All")  # Add "All" option
         self.date_combo.addItems(dates)
         conn.close()
 
@@ -129,25 +131,43 @@ class FilteredEmailLogsViewer(QWidget):
             return
 
         selected_date = self.date_combo.currentText()
+        is_all = selected_date == "All"
         now = datetime.now()
         since_24h = now - timedelta(hours=24)
         since_24h_str = since_24h.strftime("%Y-%m-%d %H:%M:%S")
+
+        search_text = self.search_input.text().strip()
+        search_filter = f"%{search_text}%"
 
         conn = self.get_connection()
         cur = conn.cursor()
 
         if self.summary_checkbox.isChecked():
-            cur.execute("""
-                SELECT emails.email, 
-                       COUNT(email_logs.id) AS log_count
-                FROM emails
-                LEFT JOIN email_logs 
-                    ON emails.id = email_logs.email_id 
-                    AND email_logs.datetime >= ?
-                WHERE DATE(emails.datetime) = ?
-                GROUP BY emails.id
-                ORDER BY log_count DESC
-            """, (since_24h_str, selected_date))
+            if is_all:
+                cur.execute("""
+                    SELECT emails.email, 
+                           COUNT(email_logs.id) AS log_count
+                    FROM emails
+                    LEFT JOIN email_logs 
+                        ON emails.id = email_logs.email_id 
+                        AND email_logs.datetime >= ?
+                    WHERE emails.email LIKE ?
+                    GROUP BY emails.id
+                    ORDER BY log_count DESC
+                """, (since_24h_str, search_filter))
+            else:
+                cur.execute("""
+                    SELECT emails.email, 
+                           COUNT(email_logs.id) AS log_count
+                    FROM emails
+                    LEFT JOIN email_logs 
+                        ON emails.id = email_logs.email_id 
+                        AND email_logs.datetime >= ?
+                    WHERE DATE(emails.datetime) = ? AND emails.email LIKE ?
+                    GROUP BY emails.id
+                    ORDER BY log_count DESC
+                """, (since_24h_str, selected_date, search_filter))
+
             rows = cur.fetchall()
 
             self.table.setSortingEnabled(False)
@@ -162,14 +182,23 @@ class FilteredEmailLogsViewer(QWidget):
             self.stats_label.setText(f"📊 Logs: {sum(c for _, c in rows)} | Emails: {len(rows)}")
 
         else:
-            cur.execute("""
-                SELECT emails.email, email_logs.datetime, email_logs.status
-                FROM email_logs
-                JOIN emails ON email_logs.email_id = emails.id
-                WHERE DATE(emails.datetime) = ?
-                  AND email_logs.datetime >= ?
-                ORDER BY email_logs.datetime DESC
-            """, (selected_date, since_24h_str))
+            if is_all:
+                cur.execute("""
+                    SELECT emails.email, email_logs.datetime, email_logs.status
+                    FROM email_logs
+                    JOIN emails ON email_logs.email_id = emails.id
+                    WHERE email_logs.datetime >= ? AND emails.email LIKE ?
+                    ORDER BY email_logs.datetime DESC
+                """, (since_24h_str, search_filter))
+            else:
+                cur.execute("""
+                    SELECT emails.email, email_logs.datetime, email_logs.status
+                    FROM email_logs
+                    JOIN emails ON email_logs.email_id = emails.id
+                    WHERE DATE(emails.datetime) = ? AND email_logs.datetime >= ? AND emails.email LIKE ?
+                    ORDER BY email_logs.datetime DESC
+                """, (selected_date, since_24h_str, search_filter))
+
             rows = cur.fetchall()
 
             self.table.setSortingEnabled(False)

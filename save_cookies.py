@@ -80,23 +80,8 @@ with sync_playwright() as p:
     print("💾 Saving cookies...")
     state = context.storage_state()
     cookies = state.get("cookies", [])
-    cookies_file = generate_cookies_file(email_value.split("@")[0])
-    print(f"Cookies will be saved to: {cookies_file}")
-    with open(cookies_file, "w") as f:
-        json.dump(cookies, f, indent=2)
     
-    # file_manager = FileManager("emails.json")
-    # file_manager.init_key(cookies_file)
     email_manager = EmailManager()
-    email_manager.insert_email_with_cookies(email_value, cookies)
-    print(f"Email {email_value} saved with cookies in {cookies_file}.")
+    email_manager.insert_email_with_cookies(email_value.split("@")[0], json.dumps(cookies))
 
-    print("✅ Cookies saved to cookies.json")
-    # input("Press Enter to close the browser...")
     browser.close()
-
-
-# print list of fies in the directory
-import os
-directory = os.path.dirname(cookies_file)
-print("Files in directory:", len(os.listdir(directory)), "files")
