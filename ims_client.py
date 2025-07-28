@@ -9,6 +9,9 @@ class IMSClient:
 
     def __init__(self, username="22momagdy", password="22momagdy22"):
         self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+        })
         self.username = username
         self.password = password
         self.logged_in = False

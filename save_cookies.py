@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 from utiles import EmailManager
-import json
+import json, sqlite3
 import time
 
 generate_cookies_file = lambda file_name : f"tradingview_cookies_25_7/{file_name}.json"
@@ -85,3 +85,8 @@ with sync_playwright() as p:
     email_manager.insert_email_with_cookies(email_value.split("@")[0], json.dumps(cookies))
 
     browser.close()
+
+conn = sqlite3.connect('database/database.db')
+cursor = conn.cursor()
+cursor.execute("SELECT COUNT(*) FROM emails WHERE DATE(datetime) = DATE('now', 'localtime');")
+print("Emails saved today:", cursor.fetchone()[0])

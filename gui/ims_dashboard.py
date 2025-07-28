@@ -23,6 +23,9 @@ class Worker(QThread):
             signin_url = f"{base_url}/ints/signin"
             data_url = f"{base_url}/ints/client/res/data_smscdr.php"
 
+            session.headers.update({
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+            })
             resp = session.get(login_url, timeout=10)
             soup = BeautifulSoup(resp.text, "html.parser")
             divs = soup.find_all("div", class_="col-sm-6")
