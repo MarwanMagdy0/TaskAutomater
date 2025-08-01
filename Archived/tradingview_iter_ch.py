@@ -19,9 +19,16 @@ while True:
     with sync_playwright() as p:
         number_id, number = numbers_manager.get_available_number()
         print(f"Using number: {number}")
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
+        # context = p.chromium.launch_persistent_context(
+        #     "Browser_Data/user_data2",
+        #     headless=False,
+        #     args=[
+        #         f"--disable-extensions-except=Browser_Data/Browsec",
+        #         f"--load-extension=Browser_Data/Browsec",
+        #     ]
+        # )
         context = browser.new_context()
-
         # Step 2: Set cookies to the context
         context.add_cookies(json.loads(cookies))
 
@@ -50,8 +57,6 @@ while True:
             phone_input = page.locator('input[data-qa-id="ui-lib-Input-input"]')
             phone_input.wait_for(state="visible", timeout=10000)
             phone_input.fill(f"{number}"[3:])
-
-            time.sleep(1)
 
             page.click("text=احصل على الرمز")
             if wait_for_selector(page, "text=يبدو أنك حاولت التحقق من رقم هاتفك عدة مرات. عد غدًا للمحاولة مرة أخرى.", timeout=5000):

@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
+from ims_client import IMSClient
 import sqlite3
 import time
 import os
 
-conn = sqlite3.connect("database/database.db", check_same_thread=False)
+conn = sqlite3.connect("database/bitly_database.db", check_same_thread=False)
 conn.row_factory = sqlite3.Row
 cursor = conn.cursor()
 
@@ -80,6 +81,9 @@ class EmailManager:
 
 
 class NumbersManager:
+    def __init__(self):
+        self.ims_client = IMSClient()
+
     def get_available_number(self):
         """Return the oldest available number that is working and not archived, and update its last_checked timestamp."""
         cursor.execute("""
@@ -97,6 +101,7 @@ class NumbersManager:
         row = cursor.fetchone()
         if row:
             number_id = row["id"]
+            number = row["number"]
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
             cursor.execute(
@@ -105,8 +110,8 @@ class NumbersManager:
             )
             conn.commit()
 
-            print(f"[+] Number ID {number_id} marked as last checked at {now}.")
-            return number_id, row["number"]
+            print(f"[+] Number {number} marked as last checked at {now}.")
+            return number_id, number
 
         return None
 
@@ -128,7 +133,13 @@ class NumbersManager:
             """, (is_working, now, number_id))
 
         conn.commit()
-        print(f"[+] Updated number ID {number_id} to {'[working]' if is_working else '[not working]'} at {now}.")
+        time_logg(f"[+] Updated number ID {number_id} to {'[working]' if is_working else '[not working]'} at {now}.")
+
+    def check_number(self, number_id, number):
+        if self.ims_client.number_exists(number):
+            self.update_number_status(number_id, is_working=True)
+        else:
+            self.update_number_status(number_id, is_working=False)
 
 def time_logg(message: str):
     """Log a message with the current time."""
