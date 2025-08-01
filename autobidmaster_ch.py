@@ -1,5 +1,6 @@
 from playwright.sync_api import sync_playwright
 from web_automater_utiles import wait_for_selector
+from utiles import NumbersManager
 import os, sys, random
 import string
 
@@ -9,7 +10,16 @@ def random_email():
     random_domain = random.choice(domains)
     return f"{random_name}@{random_domain}"
 
+numbers_manager = NumbersManager()
+proxies = [
+    ["https://www.croxyproxy.rocks/", "input#url", 'button#requestSubmit'],
+    ["https://proxyium.com/?__cpo=1", "input#unique-form-control", "button#unique-btn-blue"],
+    ["https://coproxy.io/free-web-proxy/", "input#hrefProxy", "input.navbtn"]
+]
+proxy_index = 2
+
 while True:
+    number_id, number = numbers_manager.get_available_number()
     with sync_playwright() as p:
         try:
             browser = p.chromium.launch(headless=False)
@@ -19,13 +29,14 @@ while True:
             context.clear_cookies()
             context.add_cookies(browsec_cookies)
             page = context.new_page()
-            page.goto("https://proxyium.com/?__cpo=1")  # Open any URL you want
-            page.fill('input#unique-form-control', 'https://www.autobidmaster.com/en/register-online-auto-auctions/')
-            # page.fill('input#url', 'https://www.autobidmaster.com/en/register-online-auto-auctions/')
+            # page.goto("https://proxyium.com/?__cpo=1")  # Open any URL you want
+            page.goto(proxies[proxy_index][0])  # Open any URL you want
+            # page.fill('input#unique-form-control', 'https://www.autobidmaster.com/en/register-online-auto-auctions/')
+            page.fill(proxies[proxy_index][1], 'https://www.autobidmaster.com/en/register-online-auto-auctions/')
             print("✅ Filled the input field")
             # Click the "Go!" button
-            # page.click('button#requestSubmit')
-            page.click('button#unique-btn-blue')
+            page.click(proxies[proxy_index][2])  
+            # page.click('button#unique-btn-blue')
             print("✅ Clicked the submit button")
             page.wait_for_selector("text=+", timeout=150000)
             print("✅ Page loaded successfully")
@@ -42,7 +53,7 @@ while True:
             page.click('li#iti-0__item-gt')
             print("✅ Selected Mozambique (+502)")
             page.wait_for_timeout(500)
-            page.type('input#phoneNumber', '58194906', delay=10)
+            page.type('input#phoneNumber', number[3:], delay=10)
             print("✅ Filled phone number")
             # Step 4: Fill random email
             email = random_email()

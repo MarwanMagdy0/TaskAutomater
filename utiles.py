@@ -57,6 +57,26 @@ class EmailManager:
         row = cursor.fetchone()
                 
         return row["email_id"], row["email"], row["cookies"], row["log_count"], row["remaining_emails"] if row else (None, None, None, 0)
+    
+    @staticmethod
+    def get_least_and_oldest_email():
+        query = """
+            SELECT 
+                e.id AS email_id,
+                e.email,
+                e.cookies,
+                COUNT(el.id) AS log_count
+            FROM emails e
+            LEFT JOIN email_logs el ON e.id = el.email_id
+            GROUP BY e.id
+            ORDER BY log_count ASC, e.datetime ASC
+            LIMIT 1;
+        """
+        cursor.execute(query)
+        row = cursor.fetchone()
+                
+        return row["email_id"], row["email"], row["cookies"], row["log_count"] if row else (None, None, None, 0)
+
 
     @staticmethod
     def log_status(email: str, status: str):

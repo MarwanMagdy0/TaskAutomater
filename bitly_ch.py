@@ -3,7 +3,6 @@ from utiles import time_logg, EmailManager, NumbersManager
 import json
 
 numbers_manager = NumbersManager()
-
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False, args=["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"])
     # context = p.chromium.launch_persistent_context(
@@ -44,10 +43,10 @@ with sync_playwright() as p:
     page.bring_to_front()
     page.wait_for_timeout(4000)
     try:
-        print("Closing the page...")
+        print("Waiting the Dialog...")
         page.get_by_role("button", name="Close").click(timeout=60000)
     except Exception as e:
-        print("❌ Error closing the page:", e)
+        print("❌ Error Waiting the Dialog:", e)
 
     page.get_by_text("Bitly validation code", exact=True).click(timeout=60000)
     code = page.locator("p[style*='color:#ee6123']").text_content().strip()
@@ -76,4 +75,6 @@ with sync_playwright() as p:
     page.wait_for_timeout(50000000)
     browser.close()
     browser.close()
+
+# A verification code has been sent to your phone
 
