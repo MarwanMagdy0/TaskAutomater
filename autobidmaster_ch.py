@@ -16,7 +16,7 @@ proxies = [
     ["https://proxyium.com/?__cpo=1", "input#unique-form-control", "button#unique-btn-blue"],
     ["https://coproxy.io/free-web-proxy/", "input#hrefProxy", "input.navbtn"]
 ]
-proxy_index = 2
+proxy_index = 1
 
 while True:
     number_id, number = numbers_manager.get_available_number()

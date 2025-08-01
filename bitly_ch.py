@@ -72,9 +72,11 @@ with sync_playwright() as p:
     
     email_manager = EmailManager()
     email_manager.insert_email_with_cookies(email.split("@")[0], json.dumps(cookies))
+    print("Cookies are Saved!")
     page.wait_for_timeout(50000000)
     browser.close()
     browser.close()
 
 # A verification code has been sent to your phone
+# Failed to set phone number
 
