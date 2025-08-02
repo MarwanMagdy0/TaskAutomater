@@ -6,11 +6,12 @@ import time, json
 import os
 
 ims_client = IMSClient()
-numbers_manager = NumbersManager()
+numbers_manager = NumbersManager("database/tradingview_database.db")
 
+email_manager = EmailManager("database/tradingview_database.db")
 
 while True:
-    email_id, email, cookies, log_count, remaining_emails = EmailManager.get_email_cookies_by_status()
+    email_id, email, cookies, log_count, remaining_emails = email_manager.get_email_cookies_by_status()
     if email is None:
         time_logg("No available email found.")
         break
@@ -61,14 +62,14 @@ while True:
             page.click("text=احصل على الرمز")
             if wait_for_selector(page, "text=يبدو أنك حاولت التحقق من رقم هاتفك عدة مرات. عد غدًا للمحاولة مرة أخرى.", timeout=5000):
                 print("Too many attempts")
-                EmailManager.log_status(email, "TOO_MANY_ATTEMPTS")
+                email_manager.log_status(email, "TOO_MANY_ATTEMPTS")
             
             elif wait_for_selector(page, "text=حدث خطأ ما", timeout=100):
                 print("An error occurred while requesting the code.")
-                EmailManager.log_status(email, "ERROR_REQUESTING_CODE")
+                email_manager.log_status(email, "ERROR_REQUESTING_CODE")
             else:
                 if wait_for_selector(page, "text=لقد أرسلنا الرمز", timeout=240000):
-                    EmailManager.log_status(email, "CODE_SENT")
+                    email_manager.log_status(email, "CODE_SENT")
                     print("Verify your phone number dialog appeared.")
                     time.sleep(1)
                     if ims_client.number_exists(number):

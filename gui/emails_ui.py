@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 from datetime import datetime, timedelta
 
-DB_PATH = "database/database.db"
+DB_PATH = "database/bitly_database.db"
 
 def get_total_logs_from_3am():
     now = datetime.now()

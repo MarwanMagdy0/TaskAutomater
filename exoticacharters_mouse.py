@@ -11,9 +11,8 @@ usa = "Archived/IMGS/usa.png"
 number_img = "Archived/IMGS/number_gua.png"
 submit = "Archived/IMGS/submit.png"
 back = "Archived/IMGS/back.png"
-moz = "221764325175"
 
-numbers_manager = NumbersManager()
+numbers_manager = NumbersManager("database/exotic_database.db")
 
 while True:
     number_id, number = numbers_manager.get_available_number()
@@ -59,7 +58,7 @@ while True:
         print("usa button not found. Retrying...")
     click_mouse(pos[0], pos[1])
     time.sleep(1)
-    type_text("guat", 0.1)
+    type_text("guatema", 0.1)
 
     press_key('enter')
 

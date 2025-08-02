@@ -4,32 +4,31 @@ import sqlite3
 import time
 import os
 
-conn = sqlite3.connect("database/bitly_database.db", check_same_thread=False)
-conn.row_factory = sqlite3.Row
-cursor = conn.cursor()
-
 class EmailManager:
-    @staticmethod
-    def insert_email_with_cookies(email: str, cookies: str):
+    def __init__(self, database_path):
+        self.conn = sqlite3.connect(database_path, check_same_thread=False)
+        self.conn.row_factory = sqlite3.Row
+        self.cursor = self.conn.cursor()
+
+    def insert_email_with_cookies(self, email: str, cookies: str):
         """Insert a new email with cookies into the emails table if it doesn't already exist."""
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        cursor.execute("SELECT id FROM emails WHERE email = ?", (email,))
-        existing = cursor.fetchone()
+        self.cursor.execute("SELECT id FROM emails WHERE email = ?", (email,))
+        existing = self.cursor.fetchone()
 
         if existing:
             print(f"[!] Email already exists: {email}")
             return
 
-        cursor.execute(
+        self.cursor.execute(
             "INSERT INTO emails (email, cookies, datetime) VALUES (?, ?, ?)",
             (email, cookies, now)
         )
-        conn.commit()
+        self.conn.commit()
         print(f"[+] Inserted email: {email}")
 
-    @staticmethod
-    def get_email_cookies_by_status():        
+    def get_email_cookies_by_status(self):        
         query = """
             WITH log_summary AS (
                 SELECT
@@ -53,13 +52,12 @@ class EmailManager:
             LIMIT 1;
         """
         
-        cursor.execute(query)
-        row = cursor.fetchone()
+        self.cursor.execute(query)
+        row = self.cursor.fetchone()
                 
         return row["email_id"], row["email"], row["cookies"], row["log_count"], row["remaining_emails"] if row else (None, None, None, 0)
     
-    @staticmethod
-    def get_least_and_oldest_email():
+    def get_least_and_oldest_email(self):
         query = """
             SELECT 
                 e.id AS email_id,
@@ -72,41 +70,46 @@ class EmailManager:
             ORDER BY log_count ASC, e.datetime ASC
             LIMIT 1;
         """
-        cursor.execute(query)
-        row = cursor.fetchone()
+        self.cursor.execute(query)
+        row = self.cursor.fetchone()
                 
         return row["email_id"], row["email"], row["cookies"], row["log_count"] if row else (None, None, None, 0)
 
 
-    @staticmethod
-    def log_status(email: str, status: str):
+    def log_status(self, email: str, status: str):
         """Log a new status for the given email address."""
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # Step 1: Get the email ID
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM emails WHERE email = ?", (email,))
-        result = cursor.fetchone()
+        self.cursor.execute("SELECT id FROM emails WHERE email = ?", (email,))
+        result = self.cursor.fetchone()
 
         if result:
             email_id = result["id"]
             # Step 2: Log the status
-            cursor.execute(
+            self.cursor.execute(
                 "INSERT INTO email_logs (email_id, datetime, status) VALUES (?, ?, ?)",
                 (email_id, now, status)
             )
-            conn.commit()
+            self.conn.commit()
         else:
             print(f"[!] Email not found: {email}")
+            return
+        
+        time_logg(f"[+] {email} logged as : {status}")
+    
 
 
 class NumbersManager:
-    def __init__(self):
+    def __init__(self, database_path):
         self.ims_client = IMSClient()
+        self.conn = sqlite3.connect(database_path, check_same_thread=False)
+        self.conn.row_factory = sqlite3.Row
+        self.cursor = self.conn.cursor()
 
     def get_available_number(self):
         """Return the oldest available number that is working and not archived, and update its last_checked timestamp."""
-        cursor.execute("""
+        self.cursor.execute("""
             SELECT id, number 
             FROM numbers 
             WHERE is_working = 1 AND is_archived = 0 
@@ -118,17 +121,17 @@ class NumbersManager:
                 last_checked ASC
             LIMIT 1
         """)
-        row = cursor.fetchone()
+        row = self.cursor.fetchone()
         if row:
             number_id = row["id"]
             number = row["number"]
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-            cursor.execute(
+            self.cursor.execute(
                 "UPDATE numbers SET last_checked = ? WHERE id = ?",
                 (now, number_id)
             )
-            conn.commit()
+            self.conn.commit()
 
             print(f"[+] Number {number} marked as last checked at {now}.")
             return number_id, number
@@ -140,19 +143,19 @@ class NumbersManager:
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         if is_working:
-            cursor.execute("""
+            self.cursor.execute("""
                 UPDATE numbers 
                 SET is_working = ?, last_checked = ?, hits = hits + 1 
                 WHERE id = ?
             """, (is_working, now, number_id))
         else:
-            cursor.execute("""
+            self.cursor.execute("""
                 UPDATE numbers 
                 SET is_working = ?, last_checked = ? 
                 WHERE id = ?
             """, (is_working, now, number_id))
 
-        conn.commit()
+        self.conn.commit()
         time_logg(f"[+] Updated number ID {number_id} to {'[working]' if is_working else '[not working]'} at {now}.")
 
     def check_number(self, number_id, number):

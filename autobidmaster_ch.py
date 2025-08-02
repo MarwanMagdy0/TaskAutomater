@@ -5,21 +5,22 @@ import os, sys, random
 import string
 
 def random_email():
-    domains = ["example.com", "testmail.com", "mymail.com"]
+    domains = ["gmail.com", "yahoo.com"]
     random_name = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
     random_domain = random.choice(domains)
     return f"{random_name}@{random_domain}"
 
-numbers_manager = NumbersManager()
+numbers_manager = NumbersManager("database/exotic_database.db")
 proxies = [
     ["https://www.croxyproxy.rocks/", "input#url", 'button#requestSubmit'],
     ["https://proxyium.com/?__cpo=1", "input#unique-form-control", "button#unique-btn-blue"],
-    ["https://coproxy.io/free-web-proxy/", "input#hrefProxy", "input.navbtn"]
+    # ["https://coproxy.io/free-web-proxy/", "input#hrefProxy", "input.navbtn"]
 ]
-proxy_index = 1
+proxy_index = 0
 
 while True:
     number_id, number = numbers_manager.get_available_number()
+    
     with sync_playwright() as p:
         try:
             browser = p.chromium.launch(headless=False)
@@ -50,8 +51,8 @@ while True:
             print("✅ Clicked country selector")
 
             # Step 3: Select Mozambique (+258) from the dropdown
-            page.click('li#iti-0__item-gt')
-            print("✅ Selected Mozambique (+502)")
+            page.click('li#iti-0__item-sn')
+            print("✅ Number is clicked")
             page.wait_for_timeout(500)
             page.type('input#phoneNumber', number[3:], delay=10)
             print("✅ Filled phone number")
@@ -73,6 +74,7 @@ while True:
 
                 if wait_for_selector(page, 'text=Congratulations', timeout=100):
                     print("❌ Congratulations Page. Retrying...")
+                    # page.wait_for_timeout(100000000)
                     break
 
             browser.close()
@@ -80,3 +82,9 @@ while True:
             print(f"❌ Error occurred: {e}")
             if 'browser' in locals():
                 browser.close()
+    
+    proxy_index +=1
+    if proxy_index == len(proxies):
+        proxy_index = 0
+
+# 01211776161

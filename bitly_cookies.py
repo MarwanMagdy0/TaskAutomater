@@ -6,50 +6,58 @@ import time, json
 import os, sys
 
 ims_client = IMSClient()
-numbers_manager = NumbersManager()
+numbers_manager = NumbersManager("database/bitly_database.db")
 
+sleep_time = 5
+email_manager = EmailManager("database/bitly_database.db")
+while True:
+    email_id, email, cookies, log_count = email_manager.get_least_and_oldest_email()
+    if email is None:
+        time_logg("No available email found.")
+        sys.exit(1)
 
-
-email_id, email, cookies, log_count = EmailManager.get_least_and_oldest_email()
-if email is None:
-    time_logg("No available email found.")
-    sys.exit(1)
-
-print(f"* [{email}] Using email: {email}, log count: {log_count}")
-with sync_playwright() as p:
-    number_id, number = numbers_manager.get_available_number()
-    print(f"Using number: {number}")
-    browser = p.chromium.launch(headless=False)
-    # context = p.chromium.launch_persistent_context(
-    #     "Browser_Data/user_data2",
-    #     headless=False,
-    #     args=[
-    #         f"--disable-extensions-except=Browser_Data/Browsec",
-    #         f"--load-extension=Browser_Data/Browsec",
-    #     ]
-    # )
-    context = browser.new_context()
-    # Step 2: Set cookies to the context
-    context.add_cookies(json.loads(cookies))
-
-    # Step 3: Open page with those cookies
-    page = context.new_page()
-    page.wait_for_timeout(1000)  # Wait for 1 seconds to ensure the page is fully loaded
-    while True:
+    print(f"[*] {email} Using email: {email}, log count: {log_count}")
+    with sync_playwright() as p:
+        number_id, number = numbers_manager.get_available_number()
+        print(number)
+        print(f"Using number: {number}")
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context()
+        context.add_cookies(json.loads(cookies))
+        page = context.new_page()
+        page.wait_for_timeout(1000)
+        while True:
+            try:
+                page.goto("https://app.bitly.com/settings/profile", wait_until="load")
+                print("Page loaded with cookies.")
+                break
+            except Exception as e:
+                print(f"Error loading page: {e}")
+                time.sleep(1)
+        
         try:
-            page.goto("https://app.bitly.com/settings/profile", wait_until="load")
-            print("Page loaded with cookies.")
-            break
-        except Exception as e:
-            print(f"Error loading page: {e}")
-            time.sleep(1)
-    
-    page.select_option("#two-factor-country-code", label="Guatemala (+502)")
+            page.select_option("#two-factor-country-code", label="Senegal (+221)")
+            page.fill('#profile-mobile-number', number[3:])  # Replace with desired number
+            page.wait_for_timeout(1000)
+            page.click("button:has-text('Send verification code')", timeout=60000)
+            time_logg("Send verification code")
 
-    page.fill('#profile-mobile-number', number[3:])  # Replace with desired number
-    # Click the send button
-    page.click("button:has-text('Send verification code')", timeout=60000)
-    time_logg("Send verification code")
-    page.wait_for_timeout(5000)
-    email_manager = EmailManager()
-    EmailManager.log_status(email, "CODE_SENT")
+            # A verification code has been sent to your phone
+            # Failed to set phone number
+
+            while True:
+                if wait_for_selector(page, "text=verification code has been sent", timeout=100):
+                    page.wait_for_timeout(3000)
+                    numbers_manager.check_number(number_id, number)
+                    email_manager.log_status(email, "CODE_SENT")
+                    break
+                elif wait_for_selector(page, "text=Failed to set phone number", timeout=100):
+                    email_manager.log_status(email, "Failed")
+                    break
+
+        except Exception as e:
+            print(f"Error : {e}")
+            continue
+    
+    print(f"waiting : {int(60 * sleep_time)}")
+    time.sleep(int(60 * sleep_time))
