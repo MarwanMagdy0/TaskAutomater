@@ -1,9 +1,9 @@
-import threading
-import requests
-from PIL import Image, ImageTk
-from io import BytesIO
-import tkinter as tk
-import queue
+# import threading
+# import requests
+# from PIL import Image, ImageTk
+# from io import BytesIO
+# import tkinter as tk
+# import queue
 def wait_for_selector(page, selector, timeout=5000):
     try:
         page.wait_for_selector(selector, timeout=timeout)
