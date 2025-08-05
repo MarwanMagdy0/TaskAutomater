@@ -1,5 +1,5 @@
 from playwright.sync_api import sync_playwright
-from utiles import PhoneStatusManager, time_logg
+from utiles import NumbersManager, time_logg
 from ims_client import IMSClient
 import json
 import time
@@ -18,25 +18,19 @@ EXTENSION_PATH = os.path.abspath("Browsec")
 # Create a folder to store browser user data
 USER_DATA_DIR = os.path.abspath(f"user_data{sys.argv[1]}")
 
-manager = PhoneStatusManager("numbers.json")
+number_manager = NumbersManager("database/pegasus_database.db")
 ims_client = IMSClient()
 
 with sync_playwright() as p:
-    context = p.chromium.launch_persistent_context(
-        USER_DATA_DIR,
-        headless=False,
-        args=[
-            f"--disable-extensions-except={EXTENSION_PATH}",
-            f"--load-extension={EXTENSION_PATH}",
-        ]
-    )
+    context = p.chromium.launch(headless=False)
 
-    page = context.pages[0] if context.pages else context.new_page()
+    # page = context.pages[0] if context.pages else context.new_page()
+    page = context.new_page()
     page.goto("https://web.flypgs.com/signup?_gl=1*4y03c6*_up*MQ..*_gs*MQ..&gclid=CjwKCAjw7MLDBhAuEiwAIeXGIV69sOeq2mn4uf3Z9zW3QrudG4AG_IbBXqpC5Dcpe7vFskCpqD3xFBoCTSoQAvD_BwE&gclsrc=aw.ds&gbraid=0AAAAADscbGzQxI44Ad-8qphdJbZDSAjIp")
     Err_happened = False
     while True:
         if not Err_happened:
-            number = manager.get_next_number_status()
+            number_id, number = number_manager.get_available_number()
 
         time_logg(f"Current number to process: {number}")
         if number is None:
@@ -57,16 +51,18 @@ with sync_playwright() as p:
             page.wait_for_selector("//div[text()='Senegal (+221)']", timeout=120000)
             page.click("//div[text()='Senegal (+221)']")
             page.fill('//*[@id="mui-7"]', '76')
+            page.wait_for_timeout(500)
+            print(f"{number}"[5:])
             page.fill('//*[@id="mui-8"]', f"{number}"[5:])
             page.wait_for_selector("xpath=//*[@id='recaptcha-anchor']/div", timeout=600000)
             print("found")
             # Check if the number exists in IMS logs
             if ims_client.number_exists(number):
                 time_logg(f"Number {number} exists in IMS logs.")
-                manager.update_number_status(number, is_working=True)
+                number_manager.update_number_status(number_id, is_working=True)
             else:
                 time_logg(f"Number {number} does not exist in IMS logs.")
-                manager.update_number_status(number, is_working=False)
+                number_manager.update_number_status(number_id, is_working=False)
             Err_happened = False
 
         except Exception as e:

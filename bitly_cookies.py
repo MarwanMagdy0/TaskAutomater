@@ -8,7 +8,7 @@ import os, sys
 ims_client = IMSClient()
 numbers_manager = NumbersManager("database/bitly_database.db")
 
-sleep_time = 5
+sleep_time = 6
 email_manager = EmailManager("database/bitly_database.db")
 while True:
     email_id, email, cookies, log_count = email_manager.get_least_and_oldest_email()

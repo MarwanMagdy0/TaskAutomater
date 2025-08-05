@@ -8,7 +8,7 @@ get_started = "Archived/IMGS/get_started.png"
 ok = "Archived/IMGS/ok.png"
 type1 = "Archived/IMGS/type1.png"
 usa = "Archived/IMGS/usa.png"
-number_img = "Archived/IMGS/number_gua.png"
+number_img = "Archived/IMGS/number_seng.png"
 submit = "Archived/IMGS/submit.png"
 back = "Archived/IMGS/back.png"
 
@@ -58,7 +58,7 @@ while True:
         print("usa button not found. Retrying...")
     click_mouse(pos[0], pos[1])
     time.sleep(1)
-    type_text("guatema", 0.1)
+    type_text("seng", 0.1)
 
     press_key('enter')
 

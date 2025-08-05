@@ -1,16 +1,16 @@
 from playwright.sync_api import sync_playwright
 from web_automater_utiles import wait_for_selector
 from utiles import NumbersManager
-import os, sys, random
+import os, sys, random, time
 import string
 
 def random_email():
     domains = ["gmail.com", "yahoo.com"]
-    random_name = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+    random_name = ''.join(random.choices(string.ascii_letters + string.digits, k=10)).lower()
     random_domain = random.choice(domains)
     return f"{random_name}@{random_domain}"
 
-numbers_manager = NumbersManager("database/exotic_database.db")
+numbers_manager = NumbersManager("database/bitly_database.db")
 proxies = [
     ["https://www.croxyproxy.rocks/", "input#url", 'button#requestSubmit'],
     ["https://proxyium.com/?__cpo=1", "input#unique-form-control", "button#unique-btn-blue"],
@@ -39,7 +39,7 @@ while True:
             page.click(proxies[proxy_index][2])  
             # page.click('button#unique-btn-blue')
             print("✅ Clicked the submit button")
-            page.wait_for_selector("text=+", timeout=150000)
+            page.wait_for_selector("text=+", timeout=30000)
             print("✅ Page loaded successfully")
             # Step 1: Fill First Name and Last Name
             page.fill('input#register-first-name', 'John')
@@ -64,7 +64,8 @@ while True:
             # Step 5: Click "REGISTER NOW" button
             page.click('button.qa_registration_button')
             print("✅ Clicked REGISTER NOW")
-            while True:
+            st= time.time()
+            while time.time()- st < 20:
                 if wait_for_selector(page, 'text=Upgrade Your Membership Plan', timeout=100):
                     break
 

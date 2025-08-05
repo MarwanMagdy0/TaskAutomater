@@ -6,23 +6,18 @@ if len(sys.argv) == 1:
     sys.argv.append("")
 
 # Path to unpacked Browsec extension
-EXTENSION_PATH = os.path.abspath("Browsec")
+# EXTENSION_PATH = os.path.abspath("Browsec")
 
-# Create a folder to store browser user data
-USER_DATA_DIR = os.path.abspath(f"user_data{sys.argv[1]}")
+# # Create a folder to store browser user data
+# USER_DATA_DIR = os.path.abspath(f"user_data{sys.argv[1]}")
 
 def run():
     with sync_playwright() as p:
-        browser = p.chromium.launch_persistent_context(
-            USER_DATA_DIR,
-            headless=False,
-            args=[
-                f"--disable-extensions-except={EXTENSION_PATH}",
-                f"--load-extension={EXTENSION_PATH}",
-            ]
-        ) # Set headless=True if you don't want a window
-        page = browser.pages[0] if browser.pages else browser.new_page()
-        page.goto("https://app.staffany.com/login?origin=/")  # Open any URL you want
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context()
+        page = context.pages[0] if context.pages else context.new_page()
+        page.set_viewport_size({"width": 1920, "height": 1080})
+        page.goto("https://cnlogin.cainiao.com/register?redirectURL=https%3A%2F%2Fwww.cainiao.com%2Fen%2Findex.html&cnSite=CAINIAO&bizSource=&showcn=true&lang=en_US")  # Open any URL you want
         print("Opened Chromium and navigated to https://app.staffany.com/login?origin=/")
         page.wait_for_timeout(1000000000)  # Wait 10 seconds so you can see it
         browser.close()
