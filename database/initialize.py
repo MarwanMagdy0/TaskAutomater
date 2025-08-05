@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("database/pegasus_database.db")
+conn = sqlite3.connect("database/temp5.db")
 conn.execute("PRAGMA foreign_keys = ON;")  # Enable FK support
 
 cursor = conn.cursor()
