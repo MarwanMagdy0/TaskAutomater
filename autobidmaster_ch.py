@@ -51,7 +51,7 @@ while True:
             print("✅ Clicked country selector")
 
             # Step 3: Select Mozambique (+258) from the dropdown
-            page.click('li#iti-0__item-gt')
+            page.click('li#iti-0__item-sn')
             print("✅ Number is clicked")
             page.wait_for_timeout(500)
             page.type('input#phoneNumber', number[3:], delay=10)
@@ -67,6 +67,7 @@ while True:
             st= time.time()
             while time.time()- st < 20:
                 if wait_for_selector(page, 'text=Upgrade Your Membership Plan', timeout=100):
+                    numbers_manager.check_number(number_id, number, True)
                     break
 
                 if wait_for_selector(page, 'text=Invalid email address format', timeout=100):
@@ -87,5 +88,7 @@ while True:
     proxy_index +=1
     if proxy_index == len(proxies):
         proxy_index = 0
+
+    time.sleep(60)
 
 # 01211776161

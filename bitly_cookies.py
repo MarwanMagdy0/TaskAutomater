@@ -8,9 +8,10 @@ import os, sys
 ims_client = IMSClient()
 numbers_manager = NumbersManager("database/bitly_database.db")
 
-sleep_time = 6
+sleep_time = 10
 email_manager = EmailManager("database/bitly_database.db")
 while True:
+    time.sleep(int(60 * sleep_time))
     email_id, email, cookies, log_count = email_manager.get_least_and_oldest_email()
     if email is None:
         time_logg("No available email found.")
@@ -36,6 +37,8 @@ while True:
                 time.sleep(1)
         
         try:
+            # Senegal (+221)
+            # Guatemala (+502)
             page.select_option("#two-factor-country-code", label="Senegal (+221)")
             page.fill('#profile-mobile-number', number[3:])  # Replace with desired number
             page.wait_for_timeout(1000)
@@ -60,4 +63,3 @@ while True:
             continue
     
     print(f"waiting : {int(60 * sleep_time)}")
-    time.sleep(int(60 * sleep_time))

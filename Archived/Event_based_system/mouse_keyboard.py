@@ -1,5 +1,5 @@
 import pyautogui
-import time
+import time, random
 
 def click_mouse(x, y, button='left', duration=0.1):
     """
@@ -13,6 +13,30 @@ def click_mouse(x, y, button='left', duration=0.1):
     """
     pyautogui.moveTo(x, y, duration)
     pyautogui.click(button=button)
+
+
+def drag_mouse(start, end, duration=1.0):
+    """
+    Drags mouse from start to end using a human-like curve.
+    """
+    x1, y1 = start
+    x2, y2 = end
+
+    steps = random.randint(5, 10)
+    sleep_interval = duration / steps
+    time.sleep(random.uniform(0.05, 0.2))
+    pyautogui.mouseDown(start[0], start[1])
+    for i in range(steps + 1):
+        t = i / steps
+        # Use ease-in-out curve
+        t = 3 * t ** 2 - 2 * t ** 3
+        xt = x1 + (x2 - x1) * t + random.uniform(0, 5)
+        yt = y1 + (y2 - y1) * t + random.uniform(-10, 10)
+        pyautogui.moveTo(xt, yt)
+        time.sleep(random.uniform(sleep_interval * 0.8, sleep_interval * 1.2))
+
+    time.sleep(random.uniform(0.05, 0.15))
+    pyautogui.mouseUp()
 
 def double_click_mouse(x, y, button='left', duration=0.1):
     """
