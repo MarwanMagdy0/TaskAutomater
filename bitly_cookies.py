@@ -11,7 +11,6 @@ numbers_manager = NumbersManager("database/bitly_database.db")
 sleep_time = 10
 email_manager = EmailManager("database/bitly_database.db")
 while True:
-    time.sleep(int(60 * sleep_time))
     email_id, email, cookies, log_count = email_manager.get_least_and_oldest_email()
     if email is None:
         time_logg("No available email found.")
@@ -63,3 +62,4 @@ while True:
             continue
     
     print(f"waiting : {int(60 * sleep_time)}")
+    time.sleep(int(60 * sleep_time))

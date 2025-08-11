@@ -17,25 +17,49 @@ def click_mouse(x, y, button='left', duration=0.1):
 
 def drag_mouse(start, end, duration=1.0):
     """
-    Drags mouse from start to end using a human-like curve.
+    Drags the mouse from start to end using a human-like curved path.
     """
     x1, y1 = start
     x2, y2 = end
 
-    steps = random.randint(5, 10)
+    # Total number of steps (more steps = smoother)
+    steps = random.randint(25, 35)
     sleep_interval = duration / steps
+
+    # Random curve control offset
+    curve_intensity = random.uniform(0.1, 0.3)  # how strong the arc bends
+    control_x = (x1 + x2) / 2 + (y2 - y1) * curve_intensity
+    control_y = (y1 + y2) / 2 + (x1 - x2) * curve_intensity
+
+    def bezier(t, p0, p1, p2):
+        return (1 - t)**2 * p0 + 2 * (1 - t) * t * p1 + t**2 * p2
+
     time.sleep(random.uniform(0.05, 0.2))
-    pyautogui.mouseDown(start[0], start[1])
+    pyautogui.mouseDown(x1, y1)
+
     for i in range(steps + 1):
         t = i / steps
-        # Use ease-in-out curve
+        # ease-in-out (optional, for velocity control)
         t = 3 * t ** 2 - 2 * t ** 3
-        xt = x1 + (x2 - x1) * t + random.uniform(0, 5)
-        yt = y1 + (y2 - y1) * t + random.uniform(-10, 10)
-        pyautogui.moveTo(xt, yt)
-        time.sleep(random.uniform(sleep_interval * 0.8, sleep_interval * 1.2))
 
-    time.sleep(random.uniform(0.05, 0.15))
+        xt = bezier(t, x1, control_x, x2)
+        yt = bezier(t, y1, control_y, y2)
+
+        # Add small jitter to simulate micro hand movement
+        xt += random.uniform(-1.5, 1.5)
+        yt += random.uniform(-1.5, 1.5)
+
+        pyautogui.moveTo(xt, yt)
+
+        # Simulate human delay variability
+        jitter = random.uniform(0.8, 1.2)
+        time.sleep(sleep_interval * jitter)
+
+        # Simulate small pause during long movements
+        if i in (int(steps * 0.3), int(steps * 0.7)) and random.random() < 0.3:
+            time.sleep(random.uniform(0.05, 0.1))
+
+    time.sleep(random.uniform(0.05, 0.2))
     pyautogui.mouseUp()
 
 def double_click_mouse(x, y, button='left', duration=0.1):

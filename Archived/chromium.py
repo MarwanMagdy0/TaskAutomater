@@ -1,26 +1,58 @@
 from playwright.sync_api import sync_playwright
-import os, sys
+from playwright_stealth import stealth_sync
+import sys
 
-# Check if sys.argv[1] exists, otherwise set it to an empty string
 if len(sys.argv) == 1:
     sys.argv.append("")
 
-# Path to unpacked Browsec extension
-# EXTENSION_PATH = os.path.abspath("Browsec")
-
-# # Create a folder to store browser user data
-# USER_DATA_DIR = os.path.abspath(f"user_data{sys.argv[1]}")
-
 def run():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context()
+        context = p.chromium.launch_persistent_context(
+            user_data_dir="Browser_Data/user_data0",
+            headless=False,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage"
+            ],
+            viewport={"width": 1920, "height": 1080},
+            locale="en-US",
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/122.0.0.0 Safari/537.36"
+            ),
+            extra_http_headers={
+                "Accept-Language": "en-US,en;q=0.9"
+            }
+        )
+
         page = context.pages[0] if context.pages else context.new_page()
-        page.set_viewport_size({"width": 1920, "height": 1080})
-        page.goto("https://cnlogin.cainiao.com/register?redirectURL=https%3A%2F%2Fwww.cainiao.com%2Fen%2Findex.html&cnSite=CAINIAO&bizSource=&showcn=true&lang=en_US")  # Open any URL you want
-        print("Opened Chromium and navigated to https://app.staffany.com/login?origin=/")
-        page.wait_for_timeout(1000000000)  # Wait 10 seconds so you can see it
-        browser.close()
+        stealth_sync(page)
+
+        page.goto("https://cnlogin.sg.cainiao.com/miniLogin?isNewLogin=true", wait_until="load")
+
+        print("✅ Page loaded. Waiting for iframe...")
+
+        # Wait for the iframe to appear
+        iframe_element = page.wait_for_selector("iframe", timeout=10000)
+        iframe = iframe_element.content_frame()
+
+        if iframe is None:
+            print("❌ Failed to access iframe content")
+        else:
+            print("✅ Iframe loaded successfully")
+
+            # Optional: take a screenshot of iframe
+            iframe.screenshot(path="iframe.png")
+            
+            # You can also inspect its content or fill in fields
+            # Example:
+            # iframe.fill('input[name="fm-login-id"]', "your_username")
+
+        # Keep window open
+        page.wait_for_timeout(1000000000)
+        context.close()
 
 if __name__ == "__main__":
     run()

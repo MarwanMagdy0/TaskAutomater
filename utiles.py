@@ -158,11 +158,13 @@ class NumbersManager:
         self.conn.commit()
         time_logg(f"[+] Updated number ID {number_id} to {'[working]' if is_working else '[not working]'} at {now}.")
 
-    def check_number(self, number_id, number, set_not_working = False):
+    def check_number(self, number_id, number, set_not_working = True):
         if self.ims_client.number_exists(number):
             self.update_number_status(number_id, is_working=True)
-        else:
-            self.update_number_status(number_id, is_working=set_not_working)
+            return
+        
+        if set_not_working:
+            self.update_number_status(number_id, is_working=False)
 
 def time_logg(message: str):
     """Log a message with the current time."""

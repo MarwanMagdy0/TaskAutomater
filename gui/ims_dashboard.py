@@ -68,7 +68,7 @@ class Worker(QThread):
             for row in sms_data:
                 try:
                     dt = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S") + timedelta(hours=3)
-                    time_str = dt.strftime("%Y-%m-%d %I:%M:%S %p")
+                    time_str = dt.strftime("%I:%M:%S %p")
                     formatted.append([time_str, row[1], row[2]])
                 except Exception:
                     continue

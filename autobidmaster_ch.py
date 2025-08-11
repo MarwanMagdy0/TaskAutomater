@@ -2,19 +2,18 @@ from playwright.sync_api import sync_playwright
 from web_automater_utiles import wait_for_selector
 from utiles import NumbersManager
 import os, sys, random, time
+from faker import Faker
 import string
 
-def random_email():
-    domains = ["gmail.com", "yahoo.com"]
-    random_name = ''.join(random.choices(string.ascii_letters + string.digits, k=10)).lower()
-    random_domain = random.choice(domains)
-    return f"{random_name}@{random_domain}"
+# xvfb-run -a python3 autobidmaster_ch.py
+
+fake = Faker()
 
 numbers_manager = NumbersManager("database/autobitmaster_database.db")
 proxies = [
     ["https://www.croxyproxy.rocks/", "input#url", 'button#requestSubmit'],
     ["https://proxyium.com/?__cpo=1", "input#unique-form-control", "button#unique-btn-blue"],
-    # ["https://coproxy.io/free-web-proxy/", "input#hrefProxy", "input.navbtn"]
+    ["https://proxypal.net/", 'input[name="url"]', "button.check-button"],
 ]
 proxy_index = 0
 
@@ -42,8 +41,8 @@ while True:
             page.wait_for_selector("text=+", timeout=30000)
             print("✅ Page loaded successfully")
             # Step 1: Fill First Name and Last Name
-            page.fill('input#register-first-name', 'John')
-            page.fill('input#register-last-name', 'Doe')
+            page.fill('input#register-first-name', fake.user_name())
+            page.fill('input#register-last-name', fake.last_name())
             print("✅ Filled first and last name")
 
             # Step 2: Click on the country flag dropdown
@@ -57,7 +56,7 @@ while True:
             page.type('input#phoneNumber', number[3:], delay=10)
             print("✅ Filled phone number")
             # Step 4: Fill random email
-            email = random_email()
+            email = fake.email()
             page.fill('input#email', email)
             print(f"✅ Filled email: {email}")
 
@@ -67,7 +66,8 @@ while True:
             st= time.time()
             while time.time()- st < 20:
                 if wait_for_selector(page, 'text=Upgrade Your Membership Plan', timeout=100):
-                    numbers_manager.check_number(number_id, number, True)
+                    # page.wait_for_timeout(1000000)
+                    numbers_manager.check_number(number_id, number, False)
                     break
 
                 if wait_for_selector(page, 'text=Invalid email address format', timeout=100):
@@ -76,7 +76,7 @@ while True:
 
                 if wait_for_selector(page, 'text=Congratulations', timeout=100):
                     print("❌ Congratulations Page. Retrying...")
-                    # page.wait_for_timeout(100000000)
+                    # page.wait_for_timeout(1000000)
                     break
 
             browser.close()
@@ -89,6 +89,6 @@ while True:
     if proxy_index == len(proxies):
         proxy_index = 0
 
-    time.sleep(60)
+    time.sleep(60 * 5)
 
 # 01211776161
