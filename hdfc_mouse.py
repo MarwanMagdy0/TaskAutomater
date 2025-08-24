@@ -3,127 +3,456 @@ from Archived.Event_based_system.capture_detect import screen_template_match
 from utiles import NumbersManager
 import pyautogui
 from Archived.Event_based_system.fake_data import random_email
-import time
+import time, re
 
-indonesia_tf62_numbers = [
-    "88210334635", "88256961468", "88279560707", "88256796035", "88769848033",
-    "88840010885", "88106961482", "88892739061", "88114461700", "88161893902",
-    "88208711121", "88158937006", "88749086872", "88207693787", "88100965618",
-    "88155596476", "88781748193", "88770612471", "88158963270", "88106164903",
-    "88814887344", "88143781107", "88162953325", "88285191594", "88281455763",
-    "88854941515", "88833544720", "88256768073", "88737296206", "88865338049",
-    "88246788985", "88889025781", "88228221121", "88830569456", "88271842524",
-    "88129272413", "88250471608", "88879529439", "88214066936", "88809193822",
-    "88712416583", "88826711697", "88204135475", "88841186604", "88249088884",
-    "88864069175", "88722752224", "88172118646", "88170095473", "88124948306"
-]
+moz = """
+IMS SMS | My SMS Numbers
 
-mozambique_numbers = [
-    "823296942", "823183025", "820947531", "820815682", "829030270",
-    "825898193", "824183541", "827261079", "820086768", "821449152",
-    "824966964", "825375321", "821080921", "820095329", "820422526",
-    "820722701", "824422217", "827927447", "820173842", "827321313",
-    "824783810", "825654334", "821536943", "828914155", "820229200"
-]
+Range	Prefix	Number	My Payterm	My Payout	Limits
+Mozambique Tmcel TF46		258823460497	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258828797237	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823470654	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826024887	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258824037963	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258824440385	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258824613185	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258828769825	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823766804	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826191932	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829761450	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258820547820	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825515559	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258820838729	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825666883	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258822627602	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829922338	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829775798	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258820663441	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258822090581	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258820831434	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825518959	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826516475	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821545361	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821469049	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821145092	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821099620	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258824351295	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829873505	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258822354650	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823943932	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823035209	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821223075	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826737657	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825535924	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827325549	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826486691	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823943052	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829322005	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821232041	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823094646	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258822383034	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827151226	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829542726	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826711357	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825148783	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827033467	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823458187	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827484215	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825263137	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827522205	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829640767	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825326688	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826455237	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258824192180	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258828943740	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827210338	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827955285	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258822888814	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829556366	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823334981	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827820893	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829284855	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825971879	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258824876021	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826687384	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821923437	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825039182	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258824228766	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827373643	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825279112	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258825233446	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258828125927	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258828798442	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821364786	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823687444	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821058853	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821510675	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258823921757	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821021653	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829845058	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258822459765	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821335080	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827157925	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827538401	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829277475	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258822570621	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258820699157	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826175060	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826368112	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258822879796	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258828093103	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258824661251	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258828440137	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258824161640	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258829137109	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258826840012	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258827463779	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821777676	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF46		258821723409	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258827778647	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826021498	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820659582	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258828168553	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826517510	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820812107	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829081239	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258824142296	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823968749	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822228333	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820374994	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822542920	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258828595156	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820747361	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820171302	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823030732	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826839363	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826490940	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258821442845	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829745885	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258825259926	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826898768	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829211501	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258825097807	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820759652	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829415138	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258827773674	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822580726	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820236139	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822716017	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258821731072	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258821226630	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258821738639	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829030270	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822599247	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258827810708	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829728395	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258827517568	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820950786	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823926153	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822026503	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826419432	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822711940	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822743366	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823493300	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258828894526	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820662492	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258828577654	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820082580	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258824333520	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258825385912	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823745902	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258828363823	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823734048	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258821695221	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258821516139	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820561057	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258827274026	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820586529	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823983775	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258827279467	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258825636971	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826835664	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258828371634	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823824698	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822225808	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258824298234	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258824064489	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829226717	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258828543717	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258827928742	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823422003	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258825889211	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829067593	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826994697	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826570918	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823617753	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820355428	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258825434486	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258827361262	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258824982580	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822417112	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258821091326	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829838607	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829747516	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823937586	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258828416102	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820721600	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823770054	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820884797	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258825478202	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822216201	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826518959	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258822390137	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820441849	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258829250404	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820853509	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258823230233	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258826216912	Weekly	$ 0	SD : 0 | SW : 0
+Mozambique Tmcel TF47		258820280537	Weekly	$ 0	SD : 0 | SW : 0
+"""
 
-sengal_numbers = [
-    "764282123", "768114394", "762455630", "764872376", "761036161",
-    "762647630", "765623640", "767232654", "761536585", "761955277",
-    "764609354", "766075902", "763798533", "762563919", "765935891",
-    "765886412", "762854147", "762659813", "764051823", "765723841",
-    "763717563", "765929003", "769756776", "769245464", "762364907"
-]
+slov = """
+    38651177654
+    38651901120
+    38651171308
+    38651763446
+    38651994406
+    38651660263
+    38651963339
+    38651234643
+    38651742016
+    38651899543
+    38651738025
+    38651184334
+    38651902204
+    38651362315
+    38651207541
+    38651775546
+    38651471021
+    38651672644
+    38651629227
+    38651899574
+    38651738093
+    38651544797
+    38651476992
+    38651429882
+    38651314635
+"""
 
-hdfcbk_numbers = [
-    "88889025781",
-    "88830569456",
-    "88770612471",
-    "88749086872",
-    "88737296206",
-    "88100965618"
-]
-hdfcbank_numbers_mozambique = [
-    "258827321313",
-    "258825898193",
-    "258825375321",
-    "258824966964",
-    "258824783810",
-    "258824183541",
-    "258823296942",
-    "258823183025",
-    "258821449152",
-    "258820947531",
-    "258820815682",
-    "258820422526",
-    "258820229200",
-    "258820095329"
-]
+lebanon = """
+IMS SMS | My SMS Numbers
 
-indonesia_tf62_numbers = [
-    "88792526052", "88281454970", "88879022426", "88170529057", "88231078136",
-    "88100680790", "88260293605", "88133042594", "88884178007", "88105882949",
-    "88114486707", "88844557301", "88239495098", "88266732625", "88272537520",
-    "88884610794", "88741719136", "88277253559", "88231973692", "88739716756",
-    "88126093600", "88815243115", "88235626634", "88757913862", "88174362551"
-]
+Range	Prefix	Number	My Payterm	My Payout	Limits
+Lebanon Alfa TF05		96181607903	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181640133	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181678829	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181666611	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181730597	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181729139	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181766135	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181685329	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181705249	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181758326	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181709780	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181611116	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181657785	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181785839	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181748532	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181693127	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181640005	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181625568	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181729205	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181733499	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181796482	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181775404	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181678841	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181766554	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181738064	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181668275	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181741895	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181757189	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181728095	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181688110	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181759869	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181658089	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181654845	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181611460	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181612980	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181604212	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181600705	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181635600	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181791760	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181785504	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181721708	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181727537	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181650533	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181777013	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181700373	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181621211	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181716956	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181795255	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181759999	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181625534	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181657789	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181716902	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181643487	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181764681	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181703698	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181671335	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181654728	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181685323	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181656284	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181646485	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181646384	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181709769	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181758142	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181680386	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181759880	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181647110	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181764312	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181758056	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181612929	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181796846	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181756761	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181746338	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181604240	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181657136	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181791721	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181758273	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181797355	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181791775	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181795234	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181634154	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181647199	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181682465	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181711093	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181757154	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181682996	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181785849	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181753675	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181668952	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181796442	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181656465	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181775388	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181753609	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181680321	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181741805	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181729254	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181601836	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181796897	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181770582	Weekly	$ 0	SD : 0 | SW : 0
+Lebanon Alfa TF05		96181657181	Weekly	$ 0	SD : 0 | SW : 0
+"""
 
-numbers_tj = [
-    "710887850",
-    "710887966",
-    "710888006",
-    "710887822",
-    "710887903",
-    "710887624",
-    "710887994",
-    "710887894",
-    "710887913",
-    "710887685",
-    "710887766",
-    "710887728",
-    "710887722",
-    "710887635",
-    "710887751",
-    "710887686",
-    "710887976",
-    "710887973",
-    "710887918",
-    "710887811"
-]
+Senegal = """
+IMS SMS | My SMS Numbers
 
-slovenia_numbers = [
-    "33751342",
-    "35644065",
-    "47232609",
-    "32801495",
-    "36327967",
-    "58366910",
-    "36846669",
-    "35122460",
-    "71284993",
-    "48905781",
-    "48556738",
-    "38124477",
-    "32965230",
-    "57748247",
-    "47938340",
-    "44955500",
-    "71743629",
-    "33522038",
-    "33144962",
-    "38162159",
-    "47527130",
-    "32805891",
-    "33602637",
-    "57299517",
-    "35586855"
-]
+Range	Prefix	Number	My Payterm	My Payout	Limits
+Senegal Tigo TF84		221765117260	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221762357580	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221767841815	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221764897106	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221765034518	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221767815580	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221768840312	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221764077670	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221769228672	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221769545774	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221763470771	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221761646726	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221764323559	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221765378829	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221768082935	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221767834616	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221763359247	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221768782821	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221766354615	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221766865315	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221762320887	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221765651933	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221767585564	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221767736484	Weekly	$ 0	SD : 0 | SW : 0
+Senegal Tigo TF84		221763415407	Weekly	$ 0	SD : 0 | SW : 0
+"""
+
+tan_num = """
+IMS SMS | My SMS Numbers
+
+Range	Prefix	Number	My Payterm	My Payout	Limits
+Tanzania Zantel TO122		255658680579	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255679262625	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255774573889	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255714077520	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255653095430	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255774405242	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255778076551	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255716026870	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255678187008	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255659285311	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255676226646	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255677101934	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255659606779	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255714892886	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255717522217	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255655439756	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255654235620	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255653573696	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255672241506	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255677984013	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255777705477	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255716405763	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255673138874	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255656298880	Weekly	$ 0	SD : 0 | SW : 0
+Tanzania Zantel TO122		255712702691	Weekly	$ 0	SD : 0 | SW : 0
+"""
+burkinaFaso= """ 
+IMS SMS | My SMS Numbers
+
+Range	Prefix	Number	My Payterm	My Payout	Limits
+Burkina Faso Onatel TF03		22673122746	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22651840981	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22673560639	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22662406113	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22670145161	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22652496000	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22671328916	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22672725039	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22660924620	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22602552206	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22663803410	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22671512444	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22670232520	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22661631751	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22651389118	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22672725055	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22652942218	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22663368142	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22651310795	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22673299808	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22672942613	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22601817923	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22651318596	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22673829763	Weekly	$ 0	SD : 0 | SW : 0
+Burkina Faso Onatel TF03		22670205965	Weekly	$ 0	SD : 0 | SW : 0
+"""
+
+# find all numbers starting with 258 and remove the prefix
+moz_numbers = [num[3:] for num in re.findall(r"\b258\d+\b", moz)]
+slov_numbers = [num[3:] for num in re.findall(r"\b386\d+\b", slov)]
+leb_numbers = [num[3:] for num in re.findall(r"\b961\d+\b", lebanon)]
+# my_numbers = [num[2:] for num in re.findall(r"\b95\d+\b", my)]
+Indonesia_numbers = [num[3:] for num in re.findall(r"\b221\d+\b", Senegal)]
+burkinaNumber = [num[3:] for num in re.findall(r"\b226\d+\b", burkinaFaso)]
+
+
 
 
 sub = "ch_"
 verify =        f"Archived/IMGS/hdfc/{sub}verify_mobile.png"
 change_number = f"Archived/IMGS/hdfc/{sub}change_number.png"
 number_input =  f"Archived/IMGS/hdfc/{sub}number_input.png"
-for i, number in enumerate(numbers_tj):
+print(burkinaNumber)
+for i, number in enumerate(burkinaNumber):
     print(f"[{i}] {number}")
     ret, pos = screen_template_match(number_input)
     click_mouse(pos[0]-200, pos[1]+40)
@@ -145,7 +474,3 @@ for i, number in enumerate(numbers_tj):
 
     time.sleep(0.5)
 
-    i +=1
-    if i == len(numbers_tj):
-        i = 0
-    

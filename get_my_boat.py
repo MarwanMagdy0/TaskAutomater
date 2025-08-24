@@ -1,115 +1,105 @@
-from playwright.sync_api import Playwright, sync_playwright, expect
-from web_automater_utiles import wait_for_selector
+# pip install playwright faker
+# playwright install
+
+from playwright.sync_api import sync_playwright, TimeoutError as PWTimeoutError
 from faker import Faker
-import re, time, random
+import time
+import pathlib
+import sys
 
+fake = Faker()
 
-faker = Faker()
-data = {}
-data["MZ"] = [
-    "258829030270",
-    "258827261079",
-    "258825898193",
-    "258824966964",
-    "258824183541",
-    "258823296942",
-    "258823183025",
-    "258821449152",
-    "258820947531",
-    "258820815682",
-    "258820722701",
-    "258820422526",
-    "258820095329",
-    "258820086768"
-]
+# ----------------- Helpers -----------------
+def wait_for_selector(page, selector, timeout_ms=15000, state="visible"):
+    try:
+        page.wait_for_selector(selector, timeout=timeout_ms, state=state)
+        return True
+    except PWTimeoutError:
+        return False
 
-data["MY"] = [
-    "601159732248",
-    "601157846976",
-    "601157528349",
-    "601156966369",
-    "601156911482",
-    "601113231577",
-    "601113193424",
-    "60103351727",
-]
-proxies = [
-    ["https://www.croxyproxy.rocks/", "input#url", 'button#requestSubmit'],
-    ["https://proxyium.com/?__cpo=1", "input#unique-form-control", "button#unique-btn-blue"],
-    ["https://proxypal.net/", 'input[name="url"]', "button.check-button"],
-]
+def safe_click(page, selector, timeout_ms=15000, state="visible"):
+    if wait_for_selector(page, selector, timeout_ms, state):
+        page.locator(selector).click()
+        return True
+    return False
 
-def run(playwright: Playwright, country, number) -> None:
-    proxy_index = random.randint(0, 2)
-    browser = playwright.chromium.launch(headless=False)
-    context = browser.new_context()
-    all_cookies = context.cookies()
-    browsec_cookies = [cookie for cookie in all_cookies if "browsec.com" in cookie['domain']]
-    context.clear_cookies()
-    context.add_cookies(browsec_cookies)
-    page = context.new_page()
-    # page.set_viewport_size({"width": 1500, "height": 1200})
-    page.goto(proxies[proxy_index][0])  # Open any URL you want
-    page.fill(proxies[proxy_index][1], 'https://www.getmyboat.com')
-    print("✅ Filled the input field")
-    # Click the "Go!" button
-    page.click(proxies[proxy_index][2])  
+def safe_fill(page, selector, value, timeout_ms=15000):
+    if wait_for_selector(page, selector, timeout_ms, "editable"):
+        page.fill(selector, value)
+        return True
+    return False
 
-    page.set_default_timeout(20000)
+def screenshot(page, label):
+    out = pathlib.Path("debug_screens")
+    out.mkdir(exist_ok=True)
+    path = out / f"{int(time.time())}_{label}.png"
+    page.screenshot(path=str(path), full_page=True)
+    print(f"[debug] saved {path}")
 
-    page.get_by_role("button", name="Close").click(timeout=60000)
-    # page.evaluate("document.body.style.zoom=0.8")
-    # page.evaluate("document.body.style.zoom=0.25")
-    page.locator("[data-test=\"MainMenuDropDown\"]").get_by_label("Main menu").click(timeout=60000)
-    # page.evaluate("document.body.style.zoom=0.25")
-    page.get_by_role("link", name="Create Account").click(timeout=60000)
-    page.get_by_placeholder("First name").fill(faker.user_name())
-    page.get_by_placeholder("Last name").fill(faker.last_name())
-    page.get_by_placeholder("Your email").fill(faker.email())
-    page.get_by_label("Phone number country").select_option(country)
-    # time.sleep(100)
-    page.get_by_placeholder("Phone number").fill(number)
-    page.get_by_placeholder("Password", exact=True).fill("asuidyuiqw@sahdj%^$%^8978")
-    page.get_by_placeholder("Re-enter password").fill("asuidyuiqw@sahdj%^$%^8978")
-    page.get_by_text("Yes").click(timeout=60000)
-    page.get_by_role("button", name="Create Account").click(timeout=60000)
-    page.get_by_role("button", name="Accept").click(timeout=60000)
-    # page.evaluate("document.body.style.zoom=0.25")
-    if wait_for_selector(page, "text=reCAPTCHA", 10000):
-        page.get_by_text("Yes").click()
-        page.get_by_role("button", name="Create Account").click(timeout=60000)
-        page.get_by_role("button", name="Accept").click(timeout=60000)
+# ----------------- Main flow -----------------
+def run_flow(base_url: str):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=False,
+            args=[
+                # Keep flags minimal so the window stays responsive
+                "--disable-blink-features=AutomationControlled"
+            ],
+        )
 
-    print("[PASSED]")
-    page.locator("[data-test=\"MainMenuDropDown\"]").get_by_label("Main menu").click(timeout=60000)
-    page.get_by_role("button", name="Account").click(timeout=60000)
-    page.get_by_role("button", name="Verify phone number").click(timeout=60000)
-    page.get_by_label("Enter verification code").locator("[data-test=\"close-button\"]").click(timeout=60000)
-    # new_nums = ["+601156758991", "+60103022959", "+60103351727"]
-    # for i in range(3):
-    #     page.get_by_role("button", name="Change phone number").click()
-    #     page.get_by_label("Enter password*").click()
-    #     page.get_by_label("Enter password*").fill("asuidyuiqw@sahdj%^$%^8978")
-    #     page.get_by_placeholder("Enter your phone number").click()
-    #     page.keyboard.press("Control+A")
-    #     page.keyboard.press("Delete")
-    #     page.get_by_placeholder("Enter your phone number").fill(new_nums[i])
-    #     page.get_by_role("button", name="Confirm Phone Number").click()
-    #     page.get_by_label("Enter verification code").locator("[data-test=\"close-button\"]").click()
-        # time.sleep(2)
-    # ---------------------
-    context.close()
-    browser.close()
-    return True
+        # No stealth, no proxy sites, no cookie juggling
+        context = browser.new_context(
+            viewport={"width": 1366, "height": 768},
+            device_scale_factor=1.0,
+            is_mobile=False,
+            has_touch=False,
+            locale="en-US",
+            timezone_id="UTC",
+            # Let Playwright set UA; override only if your QA plan requires it
+        )
+        page = context.new_page()
 
-with sync_playwright() as playwright:
-    for country, numbers in data.items():
-        print(country)
-        if country in ["SN", "MZ", "UZ"]:
-            continue
-        for number in numbers:
-            print(number)
-            try:
-                print(run(playwright, country, number))
-            except Exception as e:
-                print(f"❌ Error occurred: {e}")
+        # See JS console output and runtime errors that often cause “frozen UI”
+        page.on("console", lambda m: print(f"PAGE {m.type}: {m.text}"))
+        page.on("pageerror", lambda e: print("PAGE ERROR:", e))
+
+        page.set_default_timeout(20000)
+
+        print(f"[info] Navigating to {base_url}")
+        page.goto(base_url)
+
+        # Optional: open the Inspector so you can interact manually while debugging
+        # page.pause()
+
+        try:
+            # ------- Replace the selectors below with your OWN app’s selectors -------
+            # Example “open menu” (robust role/text query)
+            safe_click(page, 'button:has-text("Menu")', 5000)
+
+            # Example “open sign up”
+            safe_click(page, 'a:has-text("Sign up")', 8000)
+
+            # Example form fill (use test accounts on your staging environment)
+            safe_fill(page, 'input[placeholder="First name"]', fake.first_name())
+            safe_fill(page, 'input[placeholder="Last name"]', fake.last_name())
+            safe_fill(page, 'input[type="email"]', f"qa+{int(time.time())}@example.com")
+            safe_fill(page, 'input[type="password"]', "ChangeMe!12345")
+
+            # Example submit
+            if safe_click(page, 'button:has-text("Create Account")', 8000):
+                print("[info] submitted form")
+
+            # Take an artifact at the end
+            screenshot(page, "end_of_flow")
+
+        except Exception as e:
+            screenshot(page, "exception")
+            print(f"[error] Exception during flow: {e}", file=sys.stderr)
+
+        finally:
+            context.close()
+            browser.close()
+
+if __name__ == "__main__":
+    # Use a staging URL or a site you own/are authorized to test
+    run_flow("https://www.getmyboat.com")

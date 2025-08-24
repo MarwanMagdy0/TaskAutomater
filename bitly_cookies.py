@@ -4,12 +4,18 @@ from web_automater_utiles import wait_for_selector, click_element, fill_input
 from ims_client import IMSClient
 import time, json
 import os, sys
+from tqdm import tqdm
 
 ims_client = IMSClient()
 numbers_manager = NumbersManager("database/bitly_database.db")
 
-sleep_time = 10
+sleep_time = 30 # Minuits
+total_seconds = int(60 * sleep_time)
 email_manager = EmailManager("database/bitly_database.db")
+
+# print(f"waiting {total_seconds} seconds...")
+# for _ in tqdm(range(total_seconds), desc="Progress", ncols=70):
+#     time.sleep(1)
 while True:
     email_id, email, cookies, log_count = email_manager.get_least_and_oldest_email()
     if email is None:
@@ -61,5 +67,6 @@ while True:
             print(f"Error : {e}")
             continue
     
-    print(f"waiting : {int(60 * sleep_time)}")
-    time.sleep(int(60 * sleep_time))
+    print(f"waiting {total_seconds} seconds...")
+    for _ in tqdm(range(total_seconds), desc="Progress", ncols=70):
+        time.sleep(1)

@@ -3,12 +3,13 @@ import sqlite3
 import re
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QDialog, QTextEdit, QDialogButtonBox, QMessageBox
+    QTableWidget, QTableWidgetItem, QHeaderView, QDialog, QTextEdit,
+    QDialogButtonBox, QMessageBox, QCheckBox
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 
-DB_PATH = "database/autobitmaster_database.db"
+DB_PATH = "database/lynk_database.db"
 
 class AddNumbersDialog(QDialog):
     def __init__(self, parent=None):
@@ -28,10 +29,16 @@ class AddNumbersDialog(QDialog):
 
     def get_numbers(self):
         text = self.text_edit.toPlainText()
-        return list(set(re.findall(r'\b\d{4,}\b', text)))  # unique numbers
+        # Unique numbers of 4+ digits
+        return list(set(re.findall(r'\b\d{4,}\b', text)))
 
 
 class NumberTrackerApp(QWidget):
+    COL_NUMBER = 0
+    COL_LAST_CHECKED = 1
+    COL_WORKING = 2   # editable via checkbox
+    COL_HITS = 3
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Number Tracker")
@@ -68,7 +75,7 @@ class NumberTrackerApp(QWidget):
         # Table
         self.table = QTableWidget()
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Number", "Last Checked", "Status", "Hits"])
+        self.table.setHorizontalHeaderLabels(["Number", "Last Checked", "Working", "Hits"])
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
         self.table.verticalHeader().setVisible(False)
@@ -119,7 +126,7 @@ class NumberTrackerApp(QWidget):
         # Auto refresh
         self.refresh_timer = QTimer(self)
         self.refresh_timer.timeout.connect(self.load_data)
-        self.refresh_timer.start(10000)  # 10 seconds
+        self.refresh_timer.start(2000)  # 2 seconds
 
         self.load_data()
 
@@ -145,24 +152,72 @@ class NumberTrackerApp(QWidget):
         working = not_working = total_hits = 0
 
         for row_idx, (number, last_checked, is_working, hits) in enumerate(rows):
-            self._set_table_item(row_idx, 0, number)
-            self._set_table_item(row_idx, 1, str(last_checked or ""))
-            status = "✅ Working" if is_working else "❌ Not Working"
-            self._set_table_item(row_idx, 2, status)
-            self._set_table_item(row_idx, 3, str(hits or 0))
+            # Number
+            self._set_table_item(row_idx, self.COL_NUMBER, str(number))
 
-            working += int(is_working)
-            not_working += int(not is_working)
+            # Last Checked
+            self._set_table_item(row_idx, self.COL_LAST_CHECKED, str(last_checked or ""))
+
+            # Working (editable checkbox)
+            chk = QCheckBox("Working")
+            chk.setChecked(bool(is_working))
+            # store the number in the checkbox for reference in the handler
+            chk.setProperty("number", str(number))
+            chk.stateChanged.connect(self._on_working_toggled)
+            # center align the checkbox
+            self.table.setCellWidget(row_idx, self.COL_WORKING, self._center_widget(chk))
+
+            # Hits
+            self._set_table_item(row_idx, self.COL_HITS, str(hits or 0))
+
+            working += int(bool(is_working))
+            not_working += int(not bool(is_working))
             total_hits += hits or 0
 
         self.top_stats_label.setText(f"✅ Working: {working} | ❌ Not Working: {not_working}")
         self.bottom_stats_label.setText(f"📊 Total: {len(rows)} | 🔁 Total Hits: {total_hits}")
         self.table.setSortingEnabled(True)
 
+    def _center_widget(self, widget):
+        # Helper: center a widget in a cell
+        container = QWidget()
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignCenter)
+        layout.addWidget(widget)
+        return container
+
     def _set_table_item(self, row, col, text):
         item = QTableWidgetItem(text)
         item.setTextAlignment(Qt.AlignCenter)
+        # Make all standard cells non-editable
+        flags = item.flags()
+        flags &= ~Qt.ItemIsEditable
+        item.setFlags(flags)
         self.table.setItem(row, col, item)
+
+    def _on_working_toggled(self, state):
+        """
+        Persist Working toggle to DB and refresh.
+        """
+        chk = self.sender()
+        if not isinstance(chk, QCheckBox):
+            return
+        number = chk.property("number")
+        is_working = 1 if state == Qt.Checked else 0
+
+        try:
+            conn = self.get_connection()
+            cur = conn.cursor()
+            cur.execute("UPDATE numbers SET is_working = ? WHERE number = ?", (is_working, number))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            QMessageBox.critical(self, "DB Error", f"Failed to update 'Working' for {number}:\n{e}")
+            return
+
+        # Refresh UI (recomputes stats)
+        self.load_data()
 
     def archive_all(self):
         if self.ask("Are you sure you want to archive all numbers?"):
@@ -199,7 +254,11 @@ class NumberTrackerApp(QWidget):
                 for num in new_numbers:
                     cur.execute("SELECT id FROM numbers WHERE number = ?", (num,))
                     if not cur.fetchone():
-                        cur.execute("INSERT INTO numbers (number, last_checked, is_working, hits) VALUES (?, 0, 1, 0)", (num,))
+                        # default: not archived, working=1, hits=0; last_checked left null/0 as before
+                        cur.execute(
+                            "INSERT INTO numbers (number, last_checked, is_working, hits) VALUES (?, 0, 1, 0)",
+                            (num,)
+                        )
                         added += 1
                 conn.commit()
                 conn.close()

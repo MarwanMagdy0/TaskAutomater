@@ -4,6 +4,7 @@
 # from io import BytesIO
 # import tkinter as tk
 # import queue
+import time
 def wait_for_selector(page, selector, timeout=5000):
     try:
         page.wait_for_selector(selector, timeout=timeout)
@@ -25,6 +26,17 @@ def fill_input(page, selector, value, timeout=5000):
         return True
     except:
         return False
+
+
+def safe_load(page, url):
+    while True:
+        try:
+            page.goto(url, wait_until="load")
+            print("Page loaded with cookies.")
+            break
+        except Exception as e:
+            print(f"Error loading page: {e}")
+            time.sleep(1)
 
 # class CaptchaViewer:
 #     def __init__(self):

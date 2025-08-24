@@ -2,9 +2,9 @@ import sqlite3, json
 from playwright.sync_api import sync_playwright
 import sys
 
-conn = sqlite3.connect('database/database.db')
+conn = sqlite3.connect('database/weltrade_database.db')
 cursor = conn.cursor()
-target_url = "https://ar.tradingview.com/pricing/?source=account_activate&feature=redirect"
+target_url = "https://secure.weltrade.com/settings/personal-data"
 if len(sys.argv) < 2:
     print("Usage: python load_cookies.py <cookies_file>")
     sys.exit(1)

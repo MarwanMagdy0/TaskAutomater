@@ -99,7 +99,7 @@ def type_text(text, interval=0.005):
     """
     pyautogui.write(text, interval=interval)
 
-def press_key(key):
+def press_key(key, sleep_after=0):
     """
     Presses a key on the keyboard.
 
@@ -107,6 +107,7 @@ def press_key(key):
         key (str): The key to press.
     """
     pyautogui.press(key)
+    time.sleep(sleep_after)
 
 if __name__ == "__main__":
     # click_mouse(400, 200)

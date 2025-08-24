@@ -53,11 +53,11 @@ while True:
             dropdown_button.click()
             # page.wait_for_timeout(10000000000)  # Wait for the dropdown to open
             page.wait_for_selector(f"text=+{number[:3]}", timeout=240000)
-            page.click(f"text=+{number[:3]}")
+            page.click(f"text=+{number[:2]}")
             
             phone_input = page.locator('input[data-qa-id="ui-lib-Input-input"]')
             phone_input.wait_for(state="visible", timeout=10000)
-            phone_input.fill(f"{number}"[3:])
+            phone_input.fill(f"{number}"[2:])
 
             page.click("text=احصل على الرمز")
             if wait_for_selector(page, "text=يبدو أنك حاولت التحقق من رقم هاتفك عدة مرات. عد غدًا للمحاولة مرة أخرى.", timeout=5000):

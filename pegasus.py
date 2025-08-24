@@ -26,7 +26,7 @@ with sync_playwright() as p:
 
     # page = context.pages[0] if context.pages else context.new_page()
     page = context.new_page()
-    page.goto("https://web.flypgs.com/signup?_gl=1*4y03c6*_up*MQ..*_gs*MQ..&gclid=CjwKCAjw7MLDBhAuEiwAIeXGIV69sOeq2mn4uf3Z9zW3QrudG4AG_IbBXqpC5Dcpe7vFskCpqD3xFBoCTSoQAvD_BwE&gclsrc=aw.ds&gbraid=0AAAAADscbGzQxI44Ad-8qphdJbZDSAjIp")
+    page.goto("https://web.flypgs.com/signup")
     Err_happened = False
     while True:
         if not Err_happened:

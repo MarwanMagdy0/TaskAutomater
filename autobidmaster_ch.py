@@ -50,7 +50,7 @@ while True:
             print("✅ Clicked country selector")
 
             # Step 3: Select Mozambique (+258) from the dropdown
-            page.click('li#iti-0__item-sn')
+            page.click('li#iti-0__item-gt')
             print("✅ Number is clicked")
             page.wait_for_timeout(500)
             page.type('input#phoneNumber', number[3:], delay=10)
