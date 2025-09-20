@@ -1,67 +1,93 @@
-import re
-from playwright.sync_api import Playwright, sync_playwright
+import undetected_chromedriver as uc
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.keys import Keys
+from utiles import NumbersManager
+import shutil, time, re
+URL = "https://cnlogin.cainiao.com/login?isNewLogin="
 
-def run(playwright: Playwright) -> None:
-    browser = playwright.chromium.launch(
-        headless=False,
-        args=[
-            "--disable-blink-features=AutomationControlled",
-            "--no-sandbox",
-            "--disable-infobars",
-        ]
+def wait_until_timeout_or_closed(driver, duration=60):
+    start = time.time()
+    while time.time() - start < duration:
+        try:
+            # Try a lightweight call to check if browser is alive
+            _ = driver.title
+        except:
+            print("🛑 Browser closed by user")
+            return False  # closed early
+        time.sleep(1)  # small pause to avoid 100% CPU
+    print("⏰ 1 minute finished")
+    return True  # lasted full duration
+
+chrome_path = shutil.which("google-chrome") or shutil.which("chromium-browser") or "google-chrome"
+numbers_manager = NumbersManager("database/cianiao_database.db")
+
+while True:
+    number_id, number = numbers_manager.get_available_number()
+    # if number[-2] != "9":
+    #     continue
+    print(f"[{number_id}]:{number}")
+    opts = uc.ChromeOptions()
+    opts.add_argument("--disable-blink-features=AutomationControlled")
+    opts.add_argument("--start-maximized")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+    driver = uc.Chrome(
+        options=opts,
+        version_main=138,
+        browser_executable_path=chrome_path
     )
+    wait = WebDriverWait(driver, 20)
 
-    context = browser.new_context(
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-        locale="en-US",
-        viewport={"width": 1280, "height": 800}
-    )
+    try:
+        driver.get(URL)
+        print("🌍 Opened signup page")
 
-    # Inject JS to remove navigator.webdriver
-    context.add_init_script(
-        """
-        Object.defineProperty(navigator, 'webdriver', {
-            get: () => undefined
-        });
-        window.navigator.chrome = {
-            runtime: {},
-        };
-        Object.defineProperty(navigator, 'languages', {
-            get: () => ['en-US', 'en']
-        });
-        Object.defineProperty(navigator, 'plugins', {
-            get: () => [1, 2, 3, 4, 5],
-        });
-        """
-    )
+        # 1) Click "SMS Login"
+        sms_login_tab = wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'SMS Login')]"))
+        )
+        sms_login_tab.click()
+        print("✅ Clicked SMS Login")
 
-    page = context.new_page()
-    page.goto("https://www.cathaypacific.com/cx/fr_FR/membership/sign-up.html", timeout=60000)
-    page.wait_for_timeout(timeout=2000000)
+        # 2) Click the country dropdown trigger (+20 with arrow)
+        dropdown_trigger = wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//div[contains(@class,'phone-code')]"))
+        )
+        dropdown_trigger.click()
+        print("🌍 Opened country dropdown")
 
-    # Wait for iframe to load
-    frame = page.frame_locator('iframe')
-    account_input = frame.locator('input[placeholder="Please set the account name"]')
-    account_input.wait_for(timeout=20000)
+        # 3) Pick Malaysia (example)
+        malaysia_option = wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//span[text()='Malaysia']/ancestor::li"))
+        )
+        malaysia_option.click()
+        print("✅ Selected Malaysia (+60)")
 
-    # Fill the registration form
-    account_input.fill("anaesmymarwan")
-    frame.get_by_text("Egypt+20Search").click()
-    frame.get_by_placeholder("Search").fill("60")
-    frame.get_by_text("Malaysia").click()
-    frame.get_by_placeholder("Enter the mobile number").fill("1156502516")
-    frame.get_by_placeholder("Set the login password").fill("147852Y#")
-    frame.get_by_placeholder("Enter the login password again").fill("147852Y#")
-    frame.get_by_label("I have carefully read,").check()
-    frame.get_by_role("button", name="Agree and Register").click()
+        # 4) Type phone number
+        phone_input = wait.until(
+            EC.presence_of_element_located((By.ID, "fm-sms-login-id"))
+        )
+        phone_input.clear()
+        phone_input.send_keys(number[2:])
+        print(f"📱 Entered phone number: {number}")
 
+        # 5) Click "Get Code"
+        get_code_btn = wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//div[@class='send-btn']/a"))
+        )
+        get_code_btn.click()
+        print("📩 Clicked Get Code")
 
-    print("Slider captcha appeared. Solve it manually...")
-    input("Press Enter after solving the slider captcha...")
+        wait_until_timeout_or_closed(driver, duration=30)
+        numbers_manager.check_number(number_id, number)
+    except TimeoutException:
+        print("⏳ Timeout waiting for an element")
 
-    # Close everything
-    context.close()
-    browser.close()
+    finally:
+        print("🛑 Closing browser for this number...")
+        driver.quit()
+    
 
-with sync_playwright() as playwright:
-    run(playwright)

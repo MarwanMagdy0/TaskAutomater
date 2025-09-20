@@ -30,7 +30,7 @@ def run():
         page = context.pages[0] if context.pages else context.new_page()
         stealth_sync(page)
 
-        page.goto("https://cnlogin.sg.cainiao.com/miniLogin?isNewLogin=true", wait_until="load")
+        page.goto("https://fishingbooker.com/web/manage/account", wait_until="load")
 
         print("✅ Page loaded. Waiting for iframe...")
 

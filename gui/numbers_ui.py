@@ -9,8 +9,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 
-DB_PATH = "database/lynk_database.db"
-
+DB_PATH = "database/bitly_database.db"
 class AddNumbersDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)

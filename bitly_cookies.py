@@ -27,7 +27,7 @@ while True:
         number_id, number = numbers_manager.get_available_number()
         print(number)
         print(f"Using number: {number}")
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False)
         context = browser.new_context()
         context.add_cookies(json.loads(cookies))
         page = context.new_page()

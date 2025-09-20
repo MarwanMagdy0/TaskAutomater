@@ -3,6 +3,7 @@ from ims_client import IMSClient
 import sqlite3
 import time
 import os
+import phonenumbers
 
 class EmailManager:
     def __init__(self, database_path):
@@ -107,12 +108,17 @@ class NumbersManager:
         self.conn.row_factory = sqlite3.Row
         self.cursor = self.conn.cursor()
 
-    def get_available_number(self):
-        """Return the oldest available number that is working and not archived, and update its last_checked timestamp."""
-        self.cursor.execute("""
+    def get_available_number(self, country_code=""):
+        """
+        Return the oldest available number that is working and not archived,
+        filtered by the given country_code prefix (empty string = no filter).
+        Updates last_checked timestamp when a number is returned.
+        """
+        query = """
             SELECT id, number 
             FROM numbers 
             WHERE is_working = 1 AND is_archived = 0 
+            AND number LIKE ? 
             ORDER BY 
                 CASE 
                     WHEN last_checked IS NULL THEN 0 
@@ -120,8 +126,11 @@ class NumbersManager:
                 END,
                 last_checked ASC
             LIMIT 1
-        """)
+        """
+
+        self.cursor.execute(query, (f"{country_code}%",))
         row = self.cursor.fetchone()
+
         if row:
             number_id = row["id"]
             number = row["number"]
@@ -165,6 +174,33 @@ class NumbersManager:
         
         if set_not_working:
             self.update_number_status(number_id, is_working=False)
+    
+    @staticmethod
+    def split_number(phone: str):
+        try:
+            parsed = phonenumbers.parse('+' + phone, None)
+
+            country_code = parsed.country_code
+            national_number = parsed.national_number
+
+            return str(country_code), str(national_number)
+        except phonenumbers.NumberParseException as e:
+            return {"error": str(e)}
+    
+    def get_country_codes(self):
+        self.cursor.execute("SELECT number FROM numbers")
+        rows = self.cursor.fetchall()
+
+        country_codes = set()
+
+        for (num,) in rows:
+            try:
+                parsed = phonenumbers.parse('+' + num, None)
+                country_codes.add(f"{parsed.country_code}")
+            except phonenumbers.NumberParseException:
+                continue  # skip invalid numbers
+
+        return sorted(country_codes)
 
 def time_logg(message: str):
     """Log a message with the current time."""

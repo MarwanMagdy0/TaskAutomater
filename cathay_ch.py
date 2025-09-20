@@ -4,67 +4,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.keys import Keys
+from utiles import NumbersManager
 import shutil, time, re
 URL = "https://www.cathaypacific.com/cx/fr_FR/membership/sign-up.html"
 
-numbers = """
-Malaysia XOX TF44    601120797175
-Malaysia XOX TF44    601157649896
-Malaysia XOX TF44    60103095442
-Malaysia XOX TF44    601158725953
-Malaysia XOX TF44    601159698136
-Malaysia XOX TF44    601155618001
-Malaysia XOX TF44    60103023587
-Malaysia XOX TF44    601157596998
-Malaysia XOX TF44    601113113515
-Malaysia XOX TF44    601158518717
-Malaysia XOX TF44    601159882712
-Malaysia XOX TF44    60103355310
-Malaysia XOX TF44    601158579775
-Malaysia XOX TF44    60103404051
-Malaysia XOX TF44    601157772909
-Malaysia XOX TF44    60103064588
-Malaysia XOX TF44    601157672315
-Malaysia XOX TF44    601113224971
-Malaysia XOX TF44    60108519626
-Malaysia XOX TF44    60103409921
-Malaysia XOX TF44    601159799143
-Malaysia XOX TF44    601113023847
-Malaysia XOX TF44    60103022952
-Malaysia XOX TF44    601113198721
-Malaysia XOX TF44    601113125470
-Malaysia XOX TF44    601159932555
-Malaysia XOX TF44    601158502592
-Malaysia XOX TF44    601157698721
-Malaysia XOX TF44    601155650879
-Malaysia XOX TF44    601113166630
-Malaysia XOX TF44    601113291342
-Malaysia XOX TF44    601113322564
-Malaysia XOX TF44    601158587819
-Malaysia XOX TF44    601158534221
-Malaysia XOX TF44    601157595323
-Malaysia XOX TF44    601158536931
-Malaysia XOX TF44    601158858670
-Malaysia XOX TF44    601157371067
-Malaysia XOX TF44    601156898769
-Malaysia XOX TF44    601120598896
-Malaysia XOX TF44    601156813278
-Malaysia XOX TF44    601113041768
-Malaysia XOX TF44    601158665524
-Malaysia XOX TF44    601113173719
-Malaysia XOX TF44    601157887831
-Malaysia XOX TF44    601158520398
-Malaysia XOX TF44    601159741806
-Malaysia XOX TF44    601155184692
-Malaysia XOX TF44    601158785389
-Malaysia XOX TF44    601113279209
-
-"""
 chrome_path = shutil.which("google-chrome") or shutil.which("chromium-browser") or "google-chrome"
-extracted_numbers = [num[2:] for num in re.findall(r"\b60\d+\b", numbers)]
+numbers_manager = NumbersManager("database/cathay_database.db")
 
-for number in extracted_numbers[7:]:
-    print(f"\n📱 Using number: {number}")
+while True:
+    number_id, number = numbers_manager.get_available_number()
+    # if number[-2] != "9":
+    #     continue
+    print(f"[{number_id}]:{number}")
     opts = uc.ChromeOptions()
     opts.add_argument("--disable-blink-features=AutomationControlled")
     opts.add_argument("--start-maximized")
@@ -87,12 +38,12 @@ for number in extracted_numbers[7:]:
         print("✅ Clicked country code dropdown")
 
         input_box = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[id^='react-select-'][id$='-input']")))
-        input_box.send_keys("+60")
+        input_box.send_keys(f"+{number[:2]}")
         input_box.send_keys(Keys.ENTER)
-        print("✅ Selected country code +60")
+        print("✅ Selected country code +62")
 
         phone_input = wait.until(EC.presence_of_element_located((By.NAME, "phoneNumber")))
-        phone_input.send_keys(number)
+        phone_input.send_keys(number[2:])
         print(f"✅ Entered phone number: {number}")
 
         submit_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.mpos_button.mpos_button-primary")))
@@ -161,7 +112,14 @@ for number in extracted_numbers[7:]:
             print("🔁 Retried verify button")
         except:
             print("⚠️ Retry verify button failed")
-        time.sleep(5)
+        # time.sleep(10)
+        # try:
+        #     verify_btn.click()
+        #     print("🔁 Retried verify button")
+        # except:
+        #     print("⚠️ Retry verify button failed")
+        # WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.success-message")))
+        numbers_manager.check_number(number_id, number)
 
     except :
         print("⏳ Timeout waiting for element:")
@@ -169,4 +127,4 @@ for number in extracted_numbers[7:]:
         print("🛑 Closing browser for this number...")
         driver.quit()
     
-    time.sleep(60)
+

@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("database/lynk_database.db")
+conn = sqlite3.connect("database/bullionstar_database.db")
 conn.execute("PRAGMA foreign_keys = ON;")  # Enable FK support
 
 cursor = conn.cursor()

@@ -1,22 +1,16 @@
 from playwright.sync_api import sync_playwright
 from utiles import time_logg, EmailManager, NumbersManager
 from web_automater_utiles import wait_for_selector
+from bitly_country_codes import CODE_TO_COUNTRY
 import json, time
 
 numbers_manager = NumbersManager("database/bitly_database.db")
+print(numbers_manager.get_country_codes())
 email_manager = EmailManager("database/bitly_database.db")
 while True:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False, args=["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"])
-        # context = p.chromium.launch_persistent_context(
-        #         "Browser_Data/user_data0",
-        #         headless=False,
-        #         args=[
-        #             f"--disable-extensions-except=Browser_Data/Browsec",
-        #             f"--load-extension=Browser_Data/Browsec",
-        #         ]
-        #     )
-        number_id, number = numbers_manager.get_available_number()
+
 
         context = browser.new_context()
         all_cookies = context.cookies()
@@ -62,24 +56,6 @@ while True:
         bitly.locator("button.orb-button.default", has_text="Continue").click(timeout=6000000)
         bitly.locator("button", has_text="I'll jump in on my own").click()
         bitly.click('div.menu-item:has-text("Settings")', timeout=60000)
-        bitly.select_option("#two-factor-country-code", label="Senegal (+221)") # Senegal (+221)
-
-        bitly.fill('#profile-mobile-number', number[3:])  # Replace with desired number
-        # Click the send button
-        bitly.click("button:has-text('Send verification code')", timeout=60000)
-        time_logg("Send verification code")
-        while True:
-            if wait_for_selector(bitly, "text=verification code has been sent", timeout=100):
-                print("[Done]")
-                bitly.wait_for_timeout(3000)
-                numbers_manager.check_number(number_id, number)
-                email_manager.log_status(email, "CODE_SENT")
-                break
-            elif wait_for_selector(bitly, "text=Failed to set phone number", timeout=100):
-                print("[Failed]")
-                email_manager.log_status(email, "Failed")
-                break
-
         cookies = context.cookies()
         print("💾 Saving cookies...")
         state = context.storage_state()
@@ -87,7 +63,34 @@ while True:
         
         email_manager.insert_email_with_cookies(email.split("@")[0], json.dumps(cookies))
         print("Cookies are Saved!")
-        page.wait_for_timeout(4000)
+        for countru_code in numbers_manager.get_country_codes():
+            print(countru_code, CODE_TO_COUNTRY.get(countru_code, "Unknown"))
+            number_id, number = numbers_manager.get_available_number(countru_code)
+            if not number:
+                print("No available numbers. Exiting...")
+                break
+            country_code, national_number = numbers_manager.split_number(number)
+            bitly.select_option("#two-factor-country-code", label=CODE_TO_COUNTRY[country_code]) # Senegal (+221)
+            bitly.locator('#profile-mobile-number').clear()
+            bitly.fill('#profile-mobile-number', national_number)  # Replace with desired number
+            # Click the send button
+            bitly.click("button:has-text('Send verification code')", timeout=60000)
+            time_logg("Send verification code")
+            while True:
+                if wait_for_selector(bitly, "text=verification code has been sent", timeout=100):
+                    print("[Done]")
+                    bitly.wait_for_timeout(3000)
+                    numbers_manager.check_number(number_id, number)
+                    email_manager.log_status(email, "CODE_SENT")
+                    break
+                elif wait_for_selector(bitly, "text=Failed to set phone number", timeout=100):
+                    print("[Failed]")
+                    email_manager.log_status(email, "Failed")
+                    break
+            page.wait_for_timeout(5 * 1000)
+            page.reload(wait_until="networkidle")
+            page.wait_for_timeout(5 * 1000)
+
         
         browser.close()
     # A verification code has been sent to your phone
