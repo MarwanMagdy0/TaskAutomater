@@ -1,0 +1,5 @@
+2025/09/27-19:53:17.452 45061 Creating DB /mnt/data/Python_Projects/Qt/TaskAutomater/Browser_Data/Profile/Default/Local Storage/leveldb since it was missing.
+2025/09/27-19:53:19.310 45061 Reusing MANIFEST /mnt/data/Python_Projects/Qt/TaskAutomater/Browser_Data/Profile/Default/Local Storage/leveldb/MANIFEST-000001
+2025/09/27-19:53:34.232 45064 Level-0 table #5: started
+2025/09/27-19:53:34.316 45064 Level-0 table #5: 21719 bytes OK
+2025/09/27-19:53:34.402 45064 Delete type=0 #3

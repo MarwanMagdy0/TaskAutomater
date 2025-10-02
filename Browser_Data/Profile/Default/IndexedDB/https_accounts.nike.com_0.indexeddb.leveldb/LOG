@@ -1,0 +1,20 @@
+2025/09/27-19:53:31.295 45035 Creating DB /mnt/data/Python_Projects/Qt/TaskAutomater/Browser_Data/Profile/Default/IndexedDB/https_accounts.nike.com_0.indexeddb.leveldb since it was missing.
+2025/09/27-19:53:31.395 45035 Reusing MANIFEST /mnt/data/Python_Projects/Qt/TaskAutomater/Browser_Data/Profile/Default/IndexedDB/https_accounts.nike.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/09/27-19:53:31.979 45037 Level-0 table #5: started
+2025/09/27-19:53:32.070 45037 Level-0 table #5: 559 bytes OK
+2025/09/27-19:53:32.190 45037 Delete type=0 #3
+2025/09/27-19:53:32.190 45035 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/09/27-19:53:34.158 45037 Level-0 table #7: started
+2025/09/27-19:53:34.231 45037 Level-0 table #7: 623 bytes OK
+2025/09/27-19:53:34.366 45037 Delete type=0 #4
+2025/09/27-19:53:34.367 45037 Manual compaction at level-0 from '\x00\x02\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x03\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/09/27-19:53:34.401 45035 Level-0 table #9: started
+2025/09/27-19:53:34.468 45035 Level-0 table #9: 518 bytes OK
+2025/09/27-19:53:34.508 45035 Delete type=0 #6
+2025/09/27-19:53:34.509 45035 Manual compaction at level-0 from '\x00\x03\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x04\x00\x00\x00' @ 0 : 0; will stop at '\x00\x03\x00\x00\x05' @ 58 : 0
+2025/09/27-19:53:34.509 45035 Compacting 1@0 + 1@1 files
+2025/09/27-19:53:34.541 45035 Generated table #10@0: 14 keys, 576 bytes
+2025/09/27-19:53:34.541 45035 Compacted 1@0 + 1@1 files => 576 bytes
+2025/09/27-19:53:34.565 45035 compacted to: files[ 0 1 1 0 0 0 0 ]
+2025/09/27-19:53:34.569 45035 Delete type=2 #9
+2025/09/27-19:53:34.569 45035 Manual compaction at level-0 from '\x00\x03\x00\x00\x05' @ 58 : 0 .. '\x00\x04\x00\x00\x00' @ 0 : 0; will stop at (end)

@@ -3,10 +3,14 @@ from utiles import time_logg, EmailManager, NumbersManager
 from web_automater_utiles import wait_for_selector
 from bitly_country_codes import CODE_TO_COUNTRY
 import json, time
+from tqdm import tqdm
+
 
 numbers_manager = NumbersManager("database/bitly_database.db")
 print(numbers_manager.get_country_codes())
 email_manager = EmailManager("database/bitly_database.db")
+sleep_time = 60 # Minuits
+total_seconds = int(60 * sleep_time)
 while True:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False, args=["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"])
@@ -63,36 +67,33 @@ while True:
         
         email_manager.insert_email_with_cookies(email.split("@")[0], json.dumps(cookies))
         print("Cookies are Saved!")
-        for countru_code in numbers_manager.get_country_codes():
-            print(countru_code, CODE_TO_COUNTRY.get(countru_code, "Unknown"))
-            number_id, number = numbers_manager.get_available_number(countru_code)
-            if not number:
-                print("No available numbers. Exiting...")
+        number_id, number = numbers_manager.get_available_number("221")
+        if not number:
+            print("No available numbers. Exiting...")
+            break
+        country_code, national_number = numbers_manager.split_number(number)
+        bitly.select_option("#two-factor-country-code", label=CODE_TO_COUNTRY[country_code]) # Senegal (+221)
+        bitly.locator('#profile-mobile-number').clear()
+        bitly.fill('#profile-mobile-number', national_number)  # Replace with desired number
+        # Click the send button
+        bitly.click("button:has-text('Send verification code')", timeout=60000)
+        time_logg("Send verification code")
+        while True:
+            if wait_for_selector(bitly, "text=verification code has been sent", timeout=100):
+                print("[Done]")
+                bitly.wait_for_timeout(3000)
+                numbers_manager.check_number(number_id, number)
+                email_manager.log_status(email, "CODE_SENT")
                 break
-            country_code, national_number = numbers_manager.split_number(number)
-            bitly.select_option("#two-factor-country-code", label=CODE_TO_COUNTRY[country_code]) # Senegal (+221)
-            bitly.locator('#profile-mobile-number').clear()
-            bitly.fill('#profile-mobile-number', national_number)  # Replace with desired number
-            # Click the send button
-            bitly.click("button:has-text('Send verification code')", timeout=60000)
-            time_logg("Send verification code")
-            while True:
-                if wait_for_selector(bitly, "text=verification code has been sent", timeout=100):
-                    print("[Done]")
-                    bitly.wait_for_timeout(3000)
-                    numbers_manager.check_number(number_id, number)
-                    email_manager.log_status(email, "CODE_SENT")
-                    break
-                elif wait_for_selector(bitly, "text=Failed to set phone number", timeout=100):
-                    print("[Failed]")
-                    email_manager.log_status(email, "Failed")
-                    break
-            page.wait_for_timeout(5 * 1000)
-            page.reload(wait_until="networkidle")
-            page.wait_for_timeout(5 * 1000)
+            elif wait_for_selector(bitly, "text=Failed to set phone number", timeout=100):
+                print("[Failed]")
+                email_manager.log_status(email, "Failed")
+                break
 
         
         browser.close()
-    # A verification code has been sent to your phone
-    # Failed to set phone number
-    time.sleep(60 * 6)
+    print(f"waiting {total_seconds} seconds...")
+    for _ in tqdm(range(total_seconds), desc="Progress", ncols=70):
+        time.sleep(1)
+
+# xvfb-run -a python3 bitly_ch.py

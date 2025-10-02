@@ -7,4 +7,4 @@ import pyautogui, time
 #     pyautogui.moveTo(150, 150, 1) 
 
 time.sleep(1)
-pyautogui.typewrite("e1f8vpbjx7@mrotzis.com", interval=0.1)
+pyautogui.typewrite("u1o1p25d75@daouse.com", interval=0.1)

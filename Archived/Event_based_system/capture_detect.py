@@ -3,7 +3,7 @@ import numpy as np
 import time
 from mss import mss
 sct = mss()
-def screen_template_match(template_path, timeout=5, threshold=0.8):
+def screen_template_match(template_path, timeout=50, threshold=0.8):
     """
     Blocking function: captures full screen and matches template until timeout or success.
 
