@@ -2,5 +2,4 @@ __pycache__/
 user_data*/
 Browsec/
 *.json
-*.txt
 *.png

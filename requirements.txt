@@ -1,0 +1,6 @@
+playwright
+beautifulsoup4
+requests
+tqdm
+phonenumbers
+sqlite3-binary
