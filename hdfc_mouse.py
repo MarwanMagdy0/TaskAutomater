@@ -8,31 +8,31 @@ bolivia = """
 IMS SMS | My SMS Numbers
 
 Range	Prefix	Number	My Payterm	My Payout	Limits
-Bolivia Viva TF07		59179351660	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351941	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351679	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351897	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351919	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351927	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351779	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351721	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351711	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351908	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351652	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351676	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351784	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351831	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351702	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351728	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351849	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179352017	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351656	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351688	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351780	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351692	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351934	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351952	Weekly	$ 0	SD : 0 | SW : 0
-Bolivia Viva TF07		59179351781	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22224673008	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22221145467	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22227558092	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22223162433	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22225747437	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22225816409	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22229409448	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22220208034	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22224022818	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22221880236	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22226568901	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22221572626	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22222478998	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22224686782	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22223582522	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22225107825	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22224462401	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22225820860	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22221904510	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22227066195	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22224731728	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22223117400	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22224633103	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22225408645	Weekly	$ 0	SD : 0 | SW : 0
+Mauritania Chinguitel TF04		22229753297	Weekly	$ 0	SD : 0 | SW : 0
 """
 
 Indonesia= """ 
@@ -216,7 +216,7 @@ Palestine Jawwal GO21		972596817054	Weekly	$ 0	SD : 0 | SW : 0
 
 
 # find all numbers starting with 258 and remove the prefix
-bol_numbers = [num[3:] for num in re.findall(r"\b591\d+\b", bolivia)]
+bol_numbers = [num[3:] for num in re.findall(r"\b222\d+\b", bolivia)]
 Indonesia_numbers = [num[2:] for num in re.findall(r"\b62\d+\b", Indonesia)]
 moz_numbers = [num[3:] for num in re.findall(r"\b221\d+\b", moz)]
 pal_numbers = [num[3:] for num in re.findall(r"\b972\d+\b", pal)]
@@ -228,7 +228,7 @@ sub = "ch_"
 verify =        f"Archived/IMGS/hdfc/{sub}verify_mobile.png"
 change_number = f"Archived/IMGS/hdfc/{sub}change_number.png"
 number_input =  f"Archived/IMGS/hdfc/{sub}number_input.png"
-for i, number in enumerate(Indonesia_numbers):
+for i, number in enumerate(bol_numbers):
     print(f"[{i}] {number}")
     ret, pos = screen_template_match(number_input)
     click_mouse(pos[0]-200, pos[1]+40)
