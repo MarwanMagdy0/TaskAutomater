@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'   # You can change this if you use another version
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -26,7 +26,13 @@ jobs:
       - name: Install Playwright browsers
         run: playwright install --with-deps
 
-      - name: Run bitly_cookies.py
+      - name: Run bitly_cookies.py (with debug info)
         run: |
-          python bitly_cookies.py
+          echo "📂 Current directory: $(pwd)"
+          echo "📄 Files in directory:"
+          ls -la
+          echo "🐍 Python version:"
+          python --version
+          echo "🚀 Running script..."
+          python bitly_cookies.py || { echo "❌ Script failed"; exit 1; }
           echo "✅ Script executed at $(date -u)"
