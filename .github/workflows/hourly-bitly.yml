@@ -26,8 +26,7 @@ jobs:
       - name: Install Playwright browsers
         run: playwright install --with-deps
 
-      - name: Run bitly_cookies.py and log output
+      - name: Run bitly_cookies.py
         run: |
-          mkdir -p logs
-          python bitly_cookies.py >> logs/run_$(date -u +"%Y-%m-%d_%H-%M-%S").log 2>&1
-          echo "✅ Script executed at $(date -u)" >> logs/history.log
+          python bitly_cookies.py
+          echo "✅ Script executed at $(date -u)"
