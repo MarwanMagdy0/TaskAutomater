@@ -13,14 +13,14 @@ from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # ────────────────────── Config ──────────────────────
-BASE_URL = "http://45.82.67.20"
-LOGIN_URL = f"{BASE_URL}/ints/login"
-SIGNIN_URL = f"{BASE_URL}/ints/signin"
-DASHBOARD_URL = f"{BASE_URL}/ints/client/SMSDashboard"
-CDR_URL = f"{BASE_URL}/ints/client/res/data_smscdr.php"
+BASE_URL = "https://imssms.org"
+LOGIN_URL = f"{BASE_URL}/login"
+SIGNIN_URL = f"{BASE_URL}/signin"
+DASHBOARD_URL = f"{BASE_URL}/client/SMSDashboard"
+CDR_URL = f"{BASE_URL}/client/res/data_smscdr.php"
 
-USERNAME = "MohamedMagdy1"
-PASSWORD = "MohamedMagdy1"
+USERNAME = "Momagdy12"
+PASSWORD = "Momagdy1212"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 
 # ────────────────────── Helpers ──────────────────────
@@ -38,40 +38,71 @@ def _find_etkk(soup: BeautifulSoup) -> str:
 class Worker(QThread):
     finished = pyqtSignal(tuple)      # (main value, header text)
     new_sms_data = pyqtSignal(list)   # [[timestamp, range, number], ...]
+    logged_in = False
+    def __init__(self):
+        super().__init__()
+        self.session = None  # Will hold the requests.Session
 
-    def run(self):
+    def login(self):
+        """Login once and store session."""
         try:
-            session = requests.Session()
-            session.headers.update({"User-Agent": UA})
+            self.session = requests.Session()
+            self.session.headers.update({"User-Agent": UA})
 
-            if self.isInterruptionRequested(): return
-            r_login = session.get(LOGIN_URL, timeout=15); r_login.raise_for_status()
+            r_login = self.session.get(LOGIN_URL, timeout=15)
+            r_login.raise_for_status()
             soup_login = BeautifulSoup(r_login.text, "html.parser")
 
             qtxt = None
             for d in soup_login.select("div.col-sm-6"):
                 t = d.get_text(" ", strip=True)
-                if "What is" in t and "=" in t: qtxt = t; break
-            if not qtxt: raise RuntimeError("Could not locate math captcha on login page.")
+                if "What is" in t and "=" in t:
+                    qtxt = t
+                    break
+            if not qtxt:
+                raise RuntimeError("Could not locate math captcha on login page.")
+            
             capt_value = _solve_captcha(qtxt)
             etkk_value = _find_etkk(soup_login)
 
-            if self.isInterruptionRequested(): return
             payload = {"username": USERNAME, "password": PASSWORD, "capt": str(capt_value)}
-            if etkk_value: payload["etkk"] = etkk_value
+            if etkk_value:
+                payload["etkk"] = etkk_value
             headers = {"User-Agent": UA, "Referer": LOGIN_URL, "Origin": BASE_URL}
-            r_signin = session.post(SIGNIN_URL, data=payload, headers=headers, allow_redirects=True, timeout=20); r_signin.raise_for_status()
+            r_signin = self.session.post(SIGNIN_URL, data=payload, headers=headers, allow_redirects=True, timeout=20)
+            r_signin.raise_for_status()
 
-            if self.isInterruptionRequested(): return
-            r_dash = session.get(DASHBOARD_URL, headers={"User-Agent": UA}, timeout=20); r_dash.raise_for_status()
+            # Test login by fetching dashboard
+            r_dash = self.session.get(DASHBOARD_URL, headers={"User-Agent": UA}, timeout=20)
+            r_dash.raise_for_status()
+
+            Worker.logged_in = True
+            return True
+        except Exception as e:
+            self.finished.emit((f"Login Error", f"{type(e).__name__}: {e}"))
+            Worker.logged_in = False
+            return False
+
+    def fetch_data(self):
+        """Fetch main value, header, and SMS data using existing session."""
+        if not Worker.logged_in or not self.session:
+            self.finished.emit(("Error", "Not logged in"))
+            return
+
+        try:
+            # Fetch main dashboard values
+            r_dash = self.session.get(DASHBOARD_URL, headers={"User-Agent": UA}, timeout=20)
+            r_dash.raise_for_status()
             soup_dash = BeautifulSoup(r_dash.text, "html.parser")
+
             val_tag = soup_dash.select_one("h4.fs-20.fw-bold.mb-1.text-fixed-white")
             value = val_tag.get_text(strip=True) if val_tag else "???"
+
             header_div = soup_dash.select_one("div.main-header-center.d-none.d-lg-block")
             header_txt = header_div.get_text(" ", strip=True) if header_div else ""
             self.finished.emit((value, header_txt))
 
-            if self.isInterruptionRequested(): return
+            # Fetch SMS data
             from_time = datetime.now() - timedelta(hours=3, minutes=10)
             to_time = datetime.now()
             cdr_params = {
@@ -83,10 +114,12 @@ class Worker(QThread):
                 "User-Agent": UA,
                 "Accept": "application/json, text/javascript, */*; q=0.01",
                 "X-Requested-With": "XMLHttpRequest",
-                "Referer": f"{BASE_URL}/ints/client/SMSCDRStats",
+                "Referer": f"{BASE_URL}/client/SMSCDRStats",
             }
-            r_cdr = session.get(CDR_URL, params=cdr_params, headers=ajax_headers, timeout=20); r_cdr.raise_for_status()
-            data = r_cdr.json(); aa = data.get("aaData", []) or []
+            r_cdr = self.session.get(CDR_URL, params=cdr_params, headers=ajax_headers, timeout=20)
+            r_cdr.raise_for_status()
+            data = r_cdr.json()
+            aa = data.get("aaData", []) or []
 
             formatted = []
             for row in aa:
@@ -99,7 +132,16 @@ class Worker(QThread):
             self.new_sms_data.emit(list(reversed(formatted))[:50])
 
         except Exception as e:
-            self.finished.emit((f"Error", f"{type(e).__name__}: {e}"))
+            self.finished.emit((f"Err", f"{type(e).__name__}: {e}"))
+
+    def run(self):
+        """Override run: login if needed, then fetch data."""
+        if not Worker.logged_in:
+            success = self.login()
+            if not success:
+                return
+        self.fetch_data()
+
 
 # ──────────────────── Floating UI (click to open, drag to move) ────────────────────
 class LoginFetcher(QWidget):
@@ -232,8 +274,10 @@ class LoginFetcher(QWidget):
         self.req_timer.start(self.REQUEST_INTERVAL_MS)
 
         self._last_value_text = None
-        self._worker = None
-
+        self._worker = Worker()
+        self._worker.login()
+        self._worker.finished.connect(self._update_ui)
+        self._worker.new_sms_data.connect(self._update_table)
         self._player = QMediaPlayer()
         mp3_path = os.path.abspath("assets/money_sound.mp3")
         if os.path.exists(mp3_path):
@@ -288,9 +332,6 @@ class LoginFetcher(QWidget):
     def _launch_worker(self):
         self._reset_progress()
         if self._worker is not None and self._worker.isRunning(): return
-        self._worker = Worker()
-        self._worker.finished.connect(self._update_ui)
-        self._worker.new_sms_data.connect(self._update_table)
         self._worker.start()
         # start ticking immediately for a fresh 5s cycle
         self.anim.start(self.ANIM_STEP_MS)

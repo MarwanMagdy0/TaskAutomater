@@ -5,9 +5,9 @@ from bs4 import BeautifulSoup
 
 
 class IMSClient:
-    BASE_URL = "http://45.82.67.20"
+    BASE_URL = "https://imssms.org"
 
-    def __init__(self, username="MohamedMagdy1", password="MohamedMagdy1"):
+    def __init__(self, username="Momagdy12", password="Momagdy1212"):
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": (
@@ -58,9 +58,9 @@ class IMSClient:
         Login using math captcha (+ optional etkk). Verifies success by loading Dashboard.
         """
         try:
-            login_url = f"{self.BASE_URL}/ints/login"
-            signin_url = f"{self.BASE_URL}/ints/signin"
-            dashboard_url = f"{self.BASE_URL}/ints/client/SMSDashboard"
+            login_url = f"{self.BASE_URL}/login"
+            signin_url = f"{self.BASE_URL}/signin"
+            dashboard_url = f"{self.BASE_URL}/client/SMSDashboard"
 
             # 1) Load login → parse captcha (+ etkk if present)
             r1 = self.session.get(login_url, timeout=15)
@@ -116,7 +116,7 @@ class IMSClient:
             if not self.login():
                 raise RuntimeError("Login failed")
 
-        data_url = f"{self.BASE_URL}/ints/client/res/data_smscdr.php"
+        data_url = f"{self.BASE_URL}/client/res/data_smscdr.php"
 
         from_time = datetime.now() - timedelta(hours=3, minutes=1)
         to_time = datetime.now()
