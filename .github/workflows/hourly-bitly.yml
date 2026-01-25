@@ -3,7 +3,7 @@ name: Run bitly_cookies.py Every Hour
 on:
   schedule:
     - cron: '0 * * * *'   # Every hour (UTC)
-  workflow_dispatch:        # Optional: allows manual runs from the Actions tab
+  workflow_dispatch:
 
 jobs:
   run-script:
@@ -24,15 +24,16 @@ jobs:
           pip install -r requirements.txt
 
       - name: Install Playwright browsers
-        run: playwright install --with-deps
+        run: |
+          playwright install --with-deps
 
-      - name: Run bitly_cookies.py (with debug info)
+      - name: Run new_bitly.py with xvfb
         run: |
           echo "📂 Current directory: $(pwd)"
           echo "📄 Files in directory:"
           ls -la
           echo "🐍 Python version:"
           python --version
-          echo "🚀 Running script..."
-          python bitly_cookies.py || { echo "❌ Script failed"; exit 1; }
+          echo "🚀 Running script with xvfb..."
+          xvfb-run -a python new_bitly.py || { echo "❌ Script failed"; exit 1; }
           echo "✅ Script executed at $(date -u)"

@@ -185,10 +185,10 @@ class NumbersManager:
 
             return str(country_code), str(national_number)
         except phonenumbers.NumberParseException as e:
-            return {"error": str(e)}
+            return [None, None]
     
     def get_country_codes(self):
-        self.cursor.execute("SELECT number FROM numbers")
+        self.cursor.execute("SELECT number FROM numbers WHERE is_archived = 0")
         rows = self.cursor.fetchall()
 
         country_codes = set()
