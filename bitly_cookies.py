@@ -21,12 +21,13 @@ if email is None:
     time_logg("No available email found.")
     sys.exit(1)
 
+# email_manager.log_status(email, "Failed")
 print(f"[*] {email} Using email: {email}, log count: {log_count}")
 with sync_playwright() as p:
     number_id, number = numbers_manager.get_available_number()
     print(number)
     print(f"Using number: {number}")
-    browser = p.chromium.launch(headless=True)
+    browser = p.chromium.launch(headless=False)
     context = browser.new_context()
     context.add_cookies(json.loads(cookies))
     page = context.new_page()

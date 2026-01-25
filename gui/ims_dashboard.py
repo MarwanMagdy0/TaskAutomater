@@ -14,13 +14,13 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # ────────────────────── Config ──────────────────────
 BASE_URL = "http://45.82.67.20"
-LOGIN_URL = f"{BASE_URL}/ints/login"
-SIGNIN_URL = f"{BASE_URL}/ints/signin"
-DASHBOARD_URL = f"{BASE_URL}/ints/client/SMSDashboard"
-CDR_URL = f"{BASE_URL}/ints/client/res/data_smscdr.php"
+LOGIN_URL = f"{BASE_URL}/login"
+SIGNIN_URL = f"{BASE_URL}/signin"
+DASHBOARD_URL = f"{BASE_URL}/client/SMSDashboard"
+CDR_URL = f"{BASE_URL}/client/res/data_smscdr.php"
 
-USERNAME = "MohamedMagdy1"
-PASSWORD = "MohamedMagdy1"
+USERNAME = "Momagdy12"
+PASSWORD = "Momagdy1212"
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 
 # ────────────────────── Helpers ──────────────────────
