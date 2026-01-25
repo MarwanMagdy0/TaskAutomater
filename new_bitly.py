@@ -12,7 +12,7 @@ sleep_time = 5  # Minutes
 total_seconds = int(60 * sleep_time)
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True, args=["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"])
+    browser = p.chromium.launch(headless=False, args=["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"])
     context = browser.new_context()
     all_cookies = context.cookies()
     browsec_cookies = [cookie for cookie in all_cookies if "browsec.com" in cookie['domain']]
