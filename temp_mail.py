@@ -1,60 +1,124 @@
 import requests
 import time
+from faker import Faker
 
-BASE_URL = "https://api.mail.tm"
 
-session = requests.Session()
+class MailTM:
+    BASE_URL = "https://api.mail.tm"
 
-# 1️⃣ Get domain
-domain = session.get(f"{BASE_URL}/domains").json()["hydra:member"][0]["domain"]
-email = "marwana@" + domain
-password = "temp"
+    def __init__(self, password="temp", locale="en_US"):
+        self.session = requests.Session()
+        self.fake = Faker(locale)
+        self.password = password
+        self.email = None
+        self.token = None
+        self.seen = set()
 
-print("Email:", email)
+    def make_email_name(self):
+        first = self.fake.first_name().lower()
+        last = self.fake.last_name().lower()
+        number = int(time.time())
 
-# 2️⃣ Create account
-res = session.post(f"{BASE_URL}/accounts", json={
-    "address": email,
-    "password": password
-})
+        return f"{first}{last}{number}"
 
-if res.status_code not in (200, 201):
-    print("Account error:", res.text)
-    exit()
+    def get_domain(self):
+        res = self.session.get(f"{self.BASE_URL}/domains")
+        res.raise_for_status()
 
-# 3️⃣ Get token
-token_res = session.post(f"{BASE_URL}/token", json={
-    "address": email,
-    "password": password
-}).json()
+        domains = res.json().get("hydra:member", [])
 
-token = token_res["token"]
+        if not domains:
+            raise Exception("No mail.tm domains available")
 
-session.headers.update({
-    "Authorization": f"Bearer {token}"
-})
+        return domains[0]["domain"]
 
-print("Waiting for messages...\n")
+    def create_account(self):
+        domain = self.get_domain()
+        email_name = self.make_email_name()
+        self.email = f"{email_name}@{domain}"
 
-# 4️⃣ Poll inbox
-seen = set()
+        print("Email:", self.email)
 
-while True:
-    inbox = session.get(f"{BASE_URL}/messages").json()["hydra:member"]
+        res = self.session.post(
+            f"{self.BASE_URL}/accounts",
+            json={
+                "address": self.email,
+                "password": self.password,
+            },
+        )
 
-    for msg in inbox:
-        if msg["id"] in seen:
-            continue
+        if res.status_code not in (200, 201):
+            raise Exception(f"Account error: {res.text}")
 
-        seen.add(msg["id"])
+        self.login()
+        return self.email
 
-        # Fetch full message
-        message = session.get(f"{BASE_URL}/messages/{msg['id']}").json()
+    def login(self):
+        if not self.email:
+            raise Exception("No email created yet")
 
+        res = self.session.post(
+            f"{self.BASE_URL}/token",
+            json={
+                "address": self.email,
+                "password": self.password,
+            },
+        )
+
+        res.raise_for_status()
+
+        self.token = res.json()["token"]
+
+        self.session.headers.update({
+            "Authorization": f"Bearer {self.token}"
+        })
+
+        return self.token
+
+    def get_messages(self):
+        res = self.session.get(f"{self.BASE_URL}/messages")
+        res.raise_for_status()
+
+        return res.json().get("hydra:member", [])
+
+    def get_message(self, message_id):
+        res = self.session.get(f"{self.BASE_URL}/messages/{message_id}")
+        res.raise_for_status()
+
+        return res.json()
+
+    def wait_for_new_message(self, timeout=120, interval=5):
+        print("Waiting for messages...\n")
+
+        start = time.time()
+
+        while time.time() - start < timeout:
+            inbox = self.get_messages()
+
+            for msg in inbox:
+                if msg["id"] in self.seen:
+                    continue
+
+                self.seen.add(msg["id"])
+
+                return self.get_message(msg["id"])
+
+            time.sleep(interval)
+
+        raise TimeoutError("No new message received")
+
+    def print_message(self, message):
         print("📩 NEW MESSAGE")
-        print("From:", message["from"]["address"])
-        print("Subject:", message["subject"])
-        print("Text:", message["text"])
+        print("From:", message.get("from", {}).get("address"))
+        print("Subject:", message.get("subject"))
+        print("Text:", message.get("text"))
         print("-" * 40)
 
-    time.sleep(5)  # wait 5 seconds before checking again
+if __name__ == "__main__":
+    mail = MailTM()
+
+    email = mail.create_account()
+
+    message = mail.wait_for_new_message(timeout=120, interval=5)
+
+    mail.print_message(message)

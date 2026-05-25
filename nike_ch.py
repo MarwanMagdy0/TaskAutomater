@@ -4,13 +4,13 @@ import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from temp_mail import mail_worker
+# from temp_mail import mail_worker
 import multiprocessing
 from utiles import NumbersManager, EmailManager
 
 parent_conn, child_conn = multiprocessing.Pipe()
-p = multiprocessing.Process(target=mail_worker, args=(child_conn,))
-p.start()
+# p = multiprocessing.Process(target=mail_worker, args=(child_conn,))
+# p.start()
 parent_conn.send("start")
 print(">>", parent_conn.recv())
 numbers_manager = NumbersManager("database/nike_database.db")
